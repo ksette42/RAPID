@@ -17,6 +17,7 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  Globe,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,11 @@ const bottomItems = [
     title: "API Keys",
     href: "/dashboard/api-keys",
     icon: Key,
+  },
+  {
+    title: "Download",
+    href: "/download",
+    icon: Globe,
   },
   {
     title: "Billing",

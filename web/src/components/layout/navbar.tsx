@@ -38,6 +38,9 @@ export function Navbar() {
             <Link href="/#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </Link>
+            <Link href="/download" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Download
+            </Link>
             <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Docs
             </Link>
@@ -97,6 +100,7 @@ export function Navbar() {
         <div className="md:hidden border-t border-border/50 bg-background px-4 py-4 space-y-3">
           <Link href="/#features" className="block text-sm text-muted-foreground">Features</Link>
           <Link href="/#pricing" className="block text-sm text-muted-foreground">Pricing</Link>
+          <Link href="/download" className="block text-sm text-muted-foreground">Download</Link>
           <Link href="/docs" className="block text-sm text-muted-foreground">Docs</Link>
           {session ? (
             <>
