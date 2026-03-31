@@ -1,0 +1,266 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  subscription  Subscription?
+  analyses      Analysis[]
+  documents     Document[]
+  apiKeys       ApiKey[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Subscription & Billing
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  stripeCurrentPeriodEnd DateTime?
+  plan                 SubscriptionPlan   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Analysis Core
+model Analysis {
+  id              String         @id @default(cuid())
+  userId          String
+  title           String
+  description     String?        @db.Text
+  type            AnalysisType
+  status          AnalysisStatus @default(PENDING)
+  language        String?
+  rawContent      String?        @db.Text
+  fileName        String?
+  fileSize        Int?
+  mimeType        String?
+  analysisResult  Json?
+  costSavings     Float?
+  reliabilityScore Float?
+  performanceScore Float?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  suggestions     Suggestion[]
+  implementations Implementation[]
+  documents       Document[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Suggestions for improvements
+model Suggestion {
+  id              String           @id @default(cuid())
+  analysisId      String
+  title           String
+  description     String           @db.Text
+  category        SuggestionCategory
+  priority        Priority         @default(MEDIUM)
+  estimatedSaving Float?
+  estimatedEffort String?
+  codeSnippet     String?          @db.Text
+  improvedCode    String?          @db.Text
+  status          SuggestionStatus @default(PENDING)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  analysis        Analysis         @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  implementation  Implementation?
+
+  @@index([analysisId])
+}
+
+// Implementation tracking
+model Implementation {
+  id           String               @id @default(cuid())
+  analysisId   String
+  suggestionId String?              @unique
+  title        String
+  description  String?              @db.Text
+  status       ImplementationStatus @default(PENDING)
+  approvedAt   DateTime?
+  appliedAt    DateTime?
+  rollbackAt   DateTime?
+  appliedCode  String?              @db.Text
+  originalCode String?              @db.Text
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  analysis     Analysis             @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  suggestion   Suggestion?          @relation(fields: [suggestionId], references: [id])
+
+  @@index([analysisId])
+}
+
+// Auto-generated documentation
+model Document {
+  id         String       @id @default(cuid())
+  userId     String
+  analysisId String?
+  title      String
+  content    String       @db.Text
+  type       DocumentType @default(TECHNICAL)
+  format     String       @default("markdown")
+  isPublic   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysis   Analysis?    @relation(fields: [analysisId], references: [id])
+
+  @@index([userId])
+}
+
+// API Keys for programmatic access
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  key       String   @unique
+  lastUsed  DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Enums
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+enum AnalysisType {
+  CODE
+  DATABASE
+  DASHBOARD
+  API
+  INFRASTRUCTURE
+  GENERAL
+}
+
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum SuggestionCategory {
+  COST_SAVING
+  PERFORMANCE
+  RELIABILITY
+  SECURITY
+  MAINTAINABILITY
+  SCALABILITY
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  IMPLEMENTED
+  REJECTED
+  DISMISSED
+}
+
+enum ImplementationStatus {
+  PENDING
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  ROLLED_BACK
+  FAILED
+}
+
+enum DocumentType {
+  TECHNICAL
+  USER_GUIDE
+  API_REFERENCE
+  ARCHITECTURE
+  CHANGELOG
+}
