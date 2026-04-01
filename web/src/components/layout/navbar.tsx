@@ -19,6 +19,10 @@ import {
   BarChart3,
   GitMerge,
   ArrowRight,
+  BookOpen,
+  Key,
+  CreditCard,
+  User,
 } from "lucide-react";
 
 const featuresMenu = [
@@ -53,17 +57,73 @@ const allFeatures = [
   { label: "Implementation", href: "/dashboard/implementation", icon: GitMerge, color: "text-rapid-400" },
 ];
 
+const docsMenu = [
+  {
+    label: "Analyze API",
+    description: "Submit code, SQL, infra configs, or any data for AI analysis",
+    href: "/docs#analyze",
+    icon: Code2,
+    color: "text-blue-400",
+    bg: "bg-blue-500/10",
+  },
+  {
+    label: "Suggestions API",
+    description: "Approve, dismiss, or implement AI-generated improvements",
+    href: "/docs#suggestions",
+    icon: Sparkles,
+    color: "text-yellow-400",
+    bg: "bg-yellow-500/10",
+  },
+  {
+    label: "Documents API",
+    description: "Access auto-generated technical documentation",
+    href: "/docs#documents",
+    icon: FileText,
+    color: "text-green-400",
+    bg: "bg-green-500/10",
+  },
+  {
+    label: "Implementation API",
+    description: "Apply or roll back approved changes programmatically",
+    href: "/docs#implementation",
+    icon: GitMerge,
+    color: "text-purple-400",
+    bg: "bg-purple-500/10",
+  },
+  {
+    label: "Authentication",
+    description: "Register, create API keys, and manage access",
+    href: "/docs#auth",
+    icon: Key,
+    color: "text-orange-400",
+    bg: "bg-orange-500/10",
+  },
+  {
+    label: "Billing API",
+    description: "Create Stripe checkout sessions and manage subscriptions",
+    href: "/docs#billing",
+    icon: CreditCard,
+    color: "text-pink-400",
+    bg: "bg-pink-500/10",
+  },
+];
+
 export function Navbar() {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const docsRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setFeaturesOpen(false);
+      }
+      if (docsRef.current && !docsRef.current.contains(e.target as Node)) {
+        setDocsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -180,9 +240,78 @@ export function Navbar() {
             <Link href="/download" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Download
             </Link>
-            <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Docs
-            </Link>
+
+            {/* Docs dropdown */}
+            <div className="relative" ref={docsRef}>
+              <button
+                onClick={() => setDocsOpen(!docsOpen)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Docs
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${docsOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {docsOpen && (
+                <div className="absolute top-full right-0 mt-3 w-[480px] rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl shadow-black/30 p-4 animate-fade-in">
+                  {/* Triangle pointer */}
+                  <div className="absolute -top-2 right-10 w-4 h-2 overflow-hidden">
+                    <div className="w-3 h-3 bg-card border-l border-t border-border/60 rotate-45 translate-y-1 mx-auto" />
+                  </div>
+
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      API Reference
+                    </p>
+                    <Link
+                      href="/docs"
+                      onClick={() => setDocsOpen(false)}
+                      className="text-xs text-rapid-400 hover:text-rapid-300 font-medium flex items-center gap-1"
+                    >
+                      Full reference
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {docsMenu.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setDocsOpen(false)}
+                        className="group flex items-start gap-3 p-3 rounded-xl hover:bg-accent/60 transition-all"
+                      >
+                        <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-foreground">{item.label}</span>
+                            <ArrowRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
+                            {item.description}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-border/50 mt-3 pt-3 px-1 flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      cURL · Python · JavaScript · Java · C#
+                    </p>
+                    <Link
+                      href="/docs"
+                      onClick={() => setDocsOpen(false)}
+                      className="text-xs text-rapid-400 hover:text-rapid-300 font-medium flex items-center gap-1"
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      Open Docs
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Desktop auth */}
@@ -267,7 +396,26 @@ export function Navbar() {
           <div className="border-t border-border/50 pt-3 mt-3 space-y-1">
             <Link href="/#pricing" onClick={() => setMobileOpen(false)} className="block px-2 py-2 text-sm text-muted-foreground">Pricing</Link>
             <Link href="/download" onClick={() => setMobileOpen(false)} className="block px-2 py-2 text-sm text-muted-foreground">Download</Link>
-            <Link href="/docs" onClick={() => setMobileOpen(false)} className="block px-2 py-2 text-sm text-muted-foreground">Docs</Link>
+          </div>
+
+          {/* Mobile Docs section */}
+          <div className="border-t border-border/50 pt-3 mt-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pb-2">
+              API Docs
+            </p>
+            {docsMenu.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-accent transition-colors"
+              >
+                <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0`}>
+                  <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                </div>
+                <span className="text-sm text-muted-foreground">{item.label}</span>
+              </Link>
+            ))}
           </div>
 
           <div className="border-t border-border/50 pt-3 mt-3">
