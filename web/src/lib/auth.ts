@@ -82,15 +82,13 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user, account }) {
-      // On first sign-in, enrich the token
+    async jwt({ token, user }) {
+      // On first sign-in, enrich the token with user id
       if (user) {
         token.id = user.id;
-      }
-      // Fetch latest plan/role from DB on every token refresh
-      if (token.id) {
+        // Fetch plan/role once on sign-in
         const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
+          where: { id: user.id },
           select: {
             role: true,
             subscription: { select: { plan: true } },
@@ -109,6 +107,14 @@ export const authOptions: NextAuthOptions = {
         session.user.plan = token.plan as string;
       }
       return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      // Always redirect to baseUrl/dashboard after sign-in
+      // Prevent open redirects and ingress token leakage
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (new URL(url).origin === baseUrl) return url;
+      return `${baseUrl}/dashboard`;
     },
   },
 

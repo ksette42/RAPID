@@ -50,8 +50,9 @@ function SignInForm() {
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
       } else if (result?.ok) {
-        router.push(result.url || "/dashboard");
-        router.refresh();
+        // Always navigate to /dashboard — never use result.url which can
+        // contain ingress tokens or external callback URLs
+        router.replace("/dashboard");
       }
     } catch {
       setError("Something went wrong. Please try again.");
