@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 function SignInForm() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -22,8 +22,19 @@ function SignInForm() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (session) router.push("/dashboard");
-  }, [session, router]);
+    if (status === "authenticated" && session) {
+      router.push("/dashboard");
+    }
+  }, [status, session, router]);
+
+  // Don't render the form while the session is being checked
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-6 h-6 animate-spin text-rapid-400" />
+      </div>
+    );
+  }
 
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();

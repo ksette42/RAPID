@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
@@ -59,22 +60,36 @@ export function AnalyticsClient({ analyses, suggestions, implementations }: Anal
   const avgPerformance = analyses.reduce((acc, a) => acc + (a.performanceScore ?? 0), 0) / (analyses.length || 1);
   const implementedCount = implementations.filter(i => i.status === "COMPLETED").length;
 
-  // Monthly analysis trend
-  const monthlyData = Array.from({ length: 6 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (5 - i));
-    const month = date.toLocaleString("default", { month: "short" });
-    const year = date.getFullYear();
-    const monthAnalyses = analyses.filter(a => {
-      const ad = new Date(a.createdAt);
-      return ad.getMonth() === date.getMonth() && ad.getFullYear() === year;
+  // Defer date/locale work until after mount so server and client HTML match
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  // Monthly analysis trend — computed only on client to avoid locale mismatch
+  const monthlyData = useMemo(() => {
+    if (!mounted) {
+      // Return stable placeholder data during SSR/hydration
+      return Array.from({ length: 6 }, (_, i) => ({
+        month: `M${i + 1}`,
+        analyses: 0,
+        savings: 0,
+      }));
+    }
+    return Array.from({ length: 6 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (5 - i));
+      const month = date.toLocaleString("en-US", { month: "short" }); // fixed locale
+      const year = date.getFullYear();
+      const monthAnalyses = analyses.filter(a => {
+        const ad = new Date(a.createdAt);
+        return ad.getMonth() === date.getMonth() && ad.getFullYear() === year;
+      });
+      return {
+        month,
+        analyses: monthAnalyses.length,
+        savings: monthAnalyses.reduce((acc, a) => acc + (a.costSavings ?? 0), 0),
+      };
     });
-    return {
-      month,
-      analyses: monthAnalyses.length,
-      savings: monthAnalyses.reduce((acc, a) => acc + (a.costSavings ?? 0), 0),
-    };
-  });
+  }, [mounted, analyses]);
 
   // Category distribution
   const categoryData = Object.entries(
