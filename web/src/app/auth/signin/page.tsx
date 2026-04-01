@@ -40,16 +40,23 @@ function SignInForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (result?.error) {
-      setError("Invalid email or password");
-    } else {
-      router.push("/dashboard");
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: "/dashboard",
+      });
+      if (result?.error) {
+        setError("Invalid email or password. Please try again.");
+      } else if (result?.ok) {
+        router.push(result.url || "/dashboard");
+        router.refresh();
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 

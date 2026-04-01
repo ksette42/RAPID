@@ -7,22 +7,33 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
+  // Prisma adapter handles OAuth account linking (Google/GitHub)
   adapter: PrismaAdapter(prisma) as any,
+
+  // JWT strategy is required when using CredentialsProvider
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
+
+  // Must be explicitly set — used to sign JWT tokens and CSRF tokens
+  secret: process.env.NEXTAUTH_SECRET,
+
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
+
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      allowDangerousEmailAccountLinking: true,
     }),
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID ?? "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -32,45 +43,65 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email.toLowerCase().trim() },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              image: true,
+              password: true,
+            },
+          });
 
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials");
+          if (!user || !user.password) return null;
+
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isValid) return null;
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
         }
-
-        const isValid = await bcrypt.compare(credentials.password, user.password);
-
-        if (!isValid) {
-          throw new Error("Invalid credentials");
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-        };
       },
     }),
   ],
+
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      // On first sign-in, enrich the token
       if (user) {
         token.id = user.id;
+      }
+      // Fetch latest plan/role from DB on every token refresh
+      if (token.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          include: { subscription: true },
+          where: { id: token.id as string },
+          select: {
+            role: true,
+            subscription: { select: { plan: true } },
+          },
         });
-        token.role = dbUser?.role;
+        token.role = dbUser?.role ?? "USER";
         token.plan = dbUser?.subscription?.plan ?? "FREE";
       }
       return token;
     },
+
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
@@ -80,16 +111,22 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+
   events: {
     async createUser({ user }) {
-      // Create default subscription for new users
-      await prisma.subscription.create({
-        data: {
-          userId: user.id!,
-          plan: "FREE",
-          status: "ACTIVE",
-        },
+      // Auto-create Free subscription for new OAuth users
+      const existing = await prisma.subscription.findUnique({
+        where: { userId: user.id! },
       });
+      if (!existing) {
+        await prisma.subscription.create({
+          data: {
+            userId: user.id!,
+            plan: "FREE",
+            status: "ACTIVE",
+          },
+        });
+      }
     },
   },
 };
