@@ -159,11 +159,13 @@ export default function HomePage() {
           </h1>
 
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
-            RAPID analyzes any code, database schema, or dashboard to surface
-            actionable improvements focused on{" "}
-            <span className="text-green-400 font-medium">cost savings</span> and{" "}
-            <span className="text-blue-400 font-medium">reliability</span> —
-            then implements them with your permission.
+            Engineering teams lose millions to inefficient code, redundant infrastructure, and
+            undetected failure points. RAPID gives you an intelligent layer that continuously
+            reads your systems — code, databases, dashboards, and APIs — identifies exactly where{" "}
+            <span className="text-green-400 font-medium">money is being wasted</span> and where{" "}
+            <span className="text-blue-400 font-medium">reliability is at risk</span>, then
+            delivers precise, reviewed, and permission-gated improvements so your team ships
+            faster with confidence.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
