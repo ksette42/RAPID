@@ -1,0 +1,110 @@
+{
+  "name": "rapid-vscode",
+  "displayName": "RAPID — Code Analyzer",
+  "description": "Analyze any file for cost savings and reliability improvements directly in VS Code",
+  "version": "1.0.0",
+  "publisher": "rapid-dev",
+  "icon": "assets/icon.png",
+  "repository": { "type": "git", "url": "https://github.com/rapid-dev/rapid" },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Linters", "Other"],
+  "keywords": ["rapid", "code analysis", "performance", "cost savings", "reliability", "AI"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "rapid.analyzeFile", "title": "RAPID: Analyze Current File" },
+      { "command": "rapid.analyzeSelection", "title": "RAPID: Analyze Selected Code" },
+      { "command": "rapid.analyzeWorkspace", "title": "RAPID: Scan Workspace" },
+      { "command": "rapid.openDashboard", "title": "RAPID: Open Dashboard" },
+      { "command": "rapid.setApiKey", "title": "RAPID: Set API Key" },
+      { "command": "rapid.viewSuggestions", "title": "RAPID: View Suggestions" }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "rapid.analyzeFile",
+          "group": "rapid@1",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "rapid.analyzeSelection",
+          "group": "rapid@2",
+          "when": "editorHasSelection"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "rapid.analyzeFile",
+          "group": "rapid@1",
+          "when": "resourceScheme == file"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "RAPID",
+      "properties": {
+        "rapid.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your RAPID API key (get one at rapid.dev/dashboard/api-keys)",
+          "scope": "application"
+        },
+        "rapid.apiUrl": {
+          "type": "string",
+          "default": "https://app.rapid.dev",
+          "description": "RAPID server URL (change for self-hosted)",
+          "scope": "application"
+        },
+        "rapid.autoAnalyzeOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically analyze files when you save them"
+        },
+        "rapid.showInlineHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline code lens hints with suggestion counts"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "rapid-sidebar",
+          "title": "RAPID",
+          "icon": "assets/sidebar-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "rapid-sidebar": [
+        { "id": "rapid.analysisView", "name": "Analyses" },
+        { "id": "rapid.suggestionsView", "name": "Suggestions" }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "rapid.analyzeFile",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorIsOpen"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx vsce package",
+    "publish": "npx vsce publish"
+  },
+  "dependencies": {
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.6.3"
+  }
+}
