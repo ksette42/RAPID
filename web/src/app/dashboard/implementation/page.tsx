@@ -15,6 +15,7 @@ export default async function ImplementationPage() {
   const implementations = await prisma.implementation.findMany({
     where: { analysis: { userId: session!.user.id } },
     orderBy: { createdAt: "desc" },
+    take: 50,
     include: {
       analysis: { select: { id: true, title: true, language: true } },
       suggestion: {

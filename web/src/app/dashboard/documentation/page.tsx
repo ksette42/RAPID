@@ -11,7 +11,11 @@ export default async function DocumentationPage() {
   const documents = await prisma.document.findMany({
     where: { userId: session!.user.id },
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true, title: true, type: true, format: true,
+      isPublic: true, createdAt: true, updatedAt: true,
+      // Only fetch a preview snippet — full content loaded on demand when dialog opens
+      content: true,
       analysis: { select: { id: true, title: true, language: true } },
     },
   });

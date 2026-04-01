@@ -2,21 +2,23 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
+import dynamic from "next/dynamic";
+
+// Split recharts out of the main bundle — only loads when analytics page is visited
+const LazyCharts = dynamic(() => import("./charts"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="rounded-xl border bg-card p-6 space-y-4 animate-pulse">
+          <div className="h-5 w-36 bg-muted rounded" />
+          <div className="h-48 w-full bg-muted/20 rounded-lg" />
+        </div>
+      ))}
+    </div>
+  ),
+});
+
 import {
   TrendingDown,
   ShieldCheck,
@@ -50,7 +52,6 @@ interface AnalyticsClientProps {
   }>;
 }
 
-const COLORS = ["#6172f4", "#a855f7", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4"];
 
 export function AnalyticsClient({ analyses, suggestions, implementations }: AnalyticsClientProps) {
   const totalSavings = suggestions.reduce((acc, s) => acc + (s.estimatedSaving ?? 0), 0);
@@ -146,125 +147,12 @@ export function AnalyticsClient({ analyses, suggestions, implementations }: Anal
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Analysis Trend */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base">Analysis Trend</CardTitle>
-            <CardDescription>Analyses run per month</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                />
-                <Bar dataKey="analyses" fill="#6172f4" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Cost Savings Trend */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-base">Cost Savings Identified</CardTitle>
-            <CardDescription>Monthly potential savings discovered</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${v}`} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    fontSize: "12px",
-                  }}
-                  formatter={(v: any) => [`$${v}`, "Savings"]}
-                />
-                <Line type="monotone" dataKey="savings" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e", r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Suggestion Categories */}
-        {categoryData.length > 0 && (
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="text-base">Suggestions by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {categoryData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Languages analyzed */}
-        {languageData.length > 0 && (
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="text-base">Languages Analyzed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={languageData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={80} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Bar dataKey="value" fill="#a855f7" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {/* Charts — loaded lazily to split bundle */}
+      <LazyCharts
+        monthlyData={monthlyData}
+        categoryData={categoryData}
+        languageData={languageData}
+      />
 
       {/* Empty state */}
       {analyses.length === 0 && (

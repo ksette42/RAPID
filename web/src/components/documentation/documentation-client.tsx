@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,11 +55,18 @@ export function DocumentationClient({ documents }: { documents: Document[] }) {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
 
-  const filtered = documents.filter(
-    (doc) =>
-      doc.title.toLowerCase().includes(search.toLowerCase()) ||
-      doc.content.toLowerCase().includes(search.toLowerCase())
-  );
+  // Debounce search so we don't scan all content on every keystroke
+  const debouncedSearch = useDebounce(search, 200);
+
+  const filtered = useMemo(() => {
+    if (!debouncedSearch) return documents;
+    const q = debouncedSearch.toLowerCase();
+    return documents.filter(
+      (doc) =>
+        doc.title.toLowerCase().includes(q) ||
+        doc.content.slice(0, 500).toLowerCase().includes(q)
+    );
+  }, [documents, debouncedSearch]);
 
   const renderMarkdown = (content: string) => {
     return content

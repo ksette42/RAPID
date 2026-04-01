@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,137 @@ const categoryColors: Record<string, string> = {
 
 const priorityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
 
+// Defined outside SuggestionsClient to prevent remounting on every parent render
+const SuggestionCard = memo(function SuggestionCard({
+  suggestion,
+  expandedId,
+  loading,
+  onExpand,
+  onAction,
+}: {
+  suggestion: Suggestion;
+  expandedId: string | null;
+  loading: string | null;
+  onExpand: (id: string | null) => void;
+  onAction: (id: string, action: "approve" | "dismiss" | "implement") => void;
+}) {
+  const Icon = categoryIcons[suggestion.category] || Lightbulb;
+  const color = categoryColors[suggestion.category] || "text-muted-foreground";
+  const isExpanded = expandedId === suggestion.id;
+
+  return (
+    <Card className="border-border/50 hover:border-border transition-colors">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+            <Icon className={`w-4 h-4 ${color}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <h3 className="font-medium text-sm">{suggestion.title}</h3>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <Badge
+                  variant={
+                    suggestion.priority === "CRITICAL" ? "destructive" :
+                    suggestion.priority === "HIGH" ? "warning" :
+                    suggestion.priority === "MEDIUM" ? "info" : "secondary"
+                  }
+                  className="text-xs"
+                >
+                  {suggestion.priority}
+                </Badge>
+                {suggestion.estimatedSaving && suggestion.estimatedSaving > 0 && (
+                  <Badge variant="success" className="text-xs">
+                    {formatCurrency(suggestion.estimatedSaving)}/mo
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="outline" className="text-xs">
+                {suggestion.category.replace("_", " ")}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {suggestion.analysis.title}
+              </span>
+              {suggestion.estimatedEffort && (
+                <span className="text-xs text-muted-foreground">· {suggestion.estimatedEffort}</span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+              {suggestion.description}
+            </p>
+            {isExpanded && (
+              <div className="space-y-3 mt-3">
+                {suggestion.codeSnippet && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Current Code:</p>
+                    <pre className="bg-muted/50 rounded-lg p-3 text-xs overflow-x-auto">
+                      <code>{suggestion.codeSnippet}</code>
+                    </pre>
+                  </div>
+                )}
+                {suggestion.improvedCode && (
+                  <div>
+                    <p className="text-xs text-green-400 mb-1">Suggested Implementation:</p>
+                    <pre className="bg-green-500/5 border border-green-500/20 rounded-lg p-3 text-xs overflow-x-auto">
+                      <code>{suggestion.improvedCode}</code>
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex items-center justify-between mt-2">
+              <button
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => onExpand(isExpanded ? null : suggestion.id)}
+              >
+                {isExpanded ? "Show less" : "Show details"}
+                {suggestion.codeSnippet && " & code"}
+              </button>
+              {suggestion.status === "PENDING" && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm" variant="outline"
+                    className="h-7 text-xs text-red-400 hover:text-red-300 hover:border-red-400"
+                    onClick={() => onAction(suggestion.id, "dismiss")}
+                    disabled={loading === suggestion.id}
+                  >
+                    <XCircle className="w-3 h-3 mr-1" />Dismiss
+                  </Button>
+                  <Button
+                    size="sm" variant="gradient" className="h-7 text-xs"
+                    onClick={() => onAction(suggestion.id, "approve")}
+                    disabled={loading === suggestion.id}
+                  >
+                    <CheckCircle2 className="w-3 h-3 mr-1" />Approve
+                  </Button>
+                </div>
+              )}
+              {suggestion.status === "APPROVED" && (
+                <Button size="sm" variant="outline" className="h-7 text-xs"
+                  onClick={() => onAction(suggestion.id, "implement")}
+                  disabled={loading === suggestion.id}
+                >
+                  <GitMerge className="w-3 h-3 mr-1" />Implement Now
+                </Button>
+              )}
+              {suggestion.status === "IMPLEMENTED" && (
+                <Badge variant="success" className="text-xs">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />Implemented
+                </Badge>
+              )}
+              {(suggestion.status === "DISMISSED" || suggestion.status === "REJECTED") && (
+                <Badge variant="secondary" className="text-xs">Dismissed</Badge>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
 export function SuggestionsClient({ suggestions: initialSuggestions }: { suggestions: Suggestion[] }) {
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState(initialSuggestions);
@@ -113,148 +244,10 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
     }
   };
 
-  const filterSuggestions = (list: Suggestion[]) => {
+  const filterSuggestions = useCallback((list: Suggestion[]) => {
     if (filter === "ALL") return list;
     return list.filter((s) => s.category === filter);
-  };
-
-  const SuggestionCard = ({ suggestion }: { suggestion: Suggestion }) => {
-    const Icon = categoryIcons[suggestion.category] || Lightbulb;
-    const color = categoryColors[suggestion.category] || "text-muted-foreground";
-    const isExpanded = expandedId === suggestion.id;
-
-    return (
-      <Card className="border-border/50 hover:border-border transition-colors">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <div className={`w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0`}>
-              <Icon className={`w-4 h-4 ${color}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <h3 className="font-medium text-sm">{suggestion.title}</h3>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <Badge
-                    variant={
-                      suggestion.priority === "CRITICAL" ? "destructive" :
-                      suggestion.priority === "HIGH" ? "warning" :
-                      suggestion.priority === "MEDIUM" ? "info" : "secondary"
-                    }
-                    className="text-xs"
-                  >
-                    {suggestion.priority}
-                  </Badge>
-                  {suggestion.estimatedSaving && suggestion.estimatedSaving > 0 && (
-                    <Badge variant="success" className="text-xs">
-                      {formatCurrency(suggestion.estimatedSaving)}/mo
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="text-xs">
-                  {suggestion.category.replace("_", " ")}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {suggestion.analysis.title}
-                </span>
-                {suggestion.estimatedEffort && (
-                  <span className="text-xs text-muted-foreground">
-                    · {suggestion.estimatedEffort}
-                  </span>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                {suggestion.description}
-              </p>
-
-              {isExpanded && (
-                <div className="space-y-3 mt-3">
-                  {suggestion.codeSnippet && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Current Code:</p>
-                      <pre className="bg-muted/50 rounded-lg p-3 text-xs overflow-x-auto">
-                        <code>{suggestion.codeSnippet}</code>
-                      </pre>
-                    </div>
-                  )}
-                  {suggestion.improvedCode && (
-                    <div>
-                      <p className="text-xs text-green-400 mb-1">Suggested Implementation:</p>
-                      <pre className="bg-green-500/5 border border-green-500/20 rounded-lg p-3 text-xs overflow-x-auto">
-                        <code>{suggestion.improvedCode}</code>
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between mt-2">
-                <button
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setExpandedId(isExpanded ? null : suggestion.id)}
-                >
-                  {isExpanded ? "Show less" : "Show details"}
-                  {suggestion.codeSnippet && " & code"}
-                </button>
-
-                {suggestion.status === "PENDING" && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs text-red-400 hover:text-red-300 hover:border-red-400"
-                      onClick={() => handleAction(suggestion.id, "dismiss")}
-                      disabled={loading === suggestion.id}
-                    >
-                      <XCircle className="w-3 h-3 mr-1" />
-                      Dismiss
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="gradient"
-                      className="h-7 text-xs"
-                      onClick={() => handleAction(suggestion.id, "approve")}
-                      disabled={loading === suggestion.id}
-                    >
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      Approve
-                    </Button>
-                  </div>
-                )}
-
-                {suggestion.status === "APPROVED" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs"
-                    onClick={() => handleAction(suggestion.id, "implement")}
-                    disabled={loading === suggestion.id}
-                  >
-                    <GitMerge className="w-3 h-3 mr-1" />
-                    Implement Now
-                  </Button>
-                )}
-
-                {suggestion.status === "IMPLEMENTED" && (
-                  <Badge variant="success" className="text-xs">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Implemented
-                  </Badge>
-                )}
-
-                {(suggestion.status === "DISMISSED" || suggestion.status === "REJECTED") && (
-                  <Badge variant="secondary" className="text-xs">Dismissed</Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+  }, [filter]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -327,7 +320,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
           ) : (
             filterSuggestions(pending)
               .sort((a, b) => (priorityOrder[a.priority as keyof typeof priorityOrder] ?? 3) - (priorityOrder[b.priority as keyof typeof priorityOrder] ?? 3))
-              .map((s) => <SuggestionCard key={s.id} suggestion={s} />)
+              .map((s) => <SuggestionCard key={s.id} suggestion={s} expandedId={expandedId} loading={loading} onExpand={setExpandedId} onAction={handleAction} />)
           )}
         </TabsContent>
 
@@ -337,7 +330,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
               <p className="text-muted-foreground">No approved suggestions yet</p>
             </div>
           ) : (
-            filterSuggestions(approved).map((s) => <SuggestionCard key={s.id} suggestion={s} />)
+            filterSuggestions(approved).map((s) => <SuggestionCard key={s.id} suggestion={s} expandedId={expandedId} loading={loading} onExpand={setExpandedId} onAction={handleAction} />)
           )}
         </TabsContent>
 
@@ -347,7 +340,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
               <p className="text-muted-foreground">No implemented suggestions yet</p>
             </div>
           ) : (
-            filterSuggestions(implemented).map((s) => <SuggestionCard key={s.id} suggestion={s} />)
+            filterSuggestions(implemented).map((s) => <SuggestionCard key={s.id} suggestion={s} expandedId={expandedId} loading={loading} onExpand={setExpandedId} onAction={handleAction} />)
           )}
         </TabsContent>
 
@@ -357,7 +350,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
               <p className="text-muted-foreground">No dismissed suggestions</p>
             </div>
           ) : (
-            filterSuggestions(dismissed).map((s) => <SuggestionCard key={s.id} suggestion={s} />)
+            filterSuggestions(dismissed).map((s) => <SuggestionCard key={s.id} suggestion={s} expandedId={expandedId} loading={loading} onExpand={setExpandedId} onAction={handleAction} />)
           )}
         </TabsContent>
       </Tabs>

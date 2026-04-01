@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ interface Implementation {
 
 export function ImplementationClient({ implementations }: { implementations: Implementation[] }) {
   const { toast } = useToast();
+  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [selectedImpl, setSelectedImpl] = useState<Implementation | null>(null);
   const [diffOpen, setDiffOpen] = useState(false);
@@ -62,7 +64,7 @@ export function ImplementationClient({ implementations }: { implementations: Imp
       });
       if (!res.ok) throw new Error("Failed to apply");
       toast({ title: "Implementation Applied", description: "The change has been recorded as applied." });
-      window.location.reload();
+      router.refresh();
     } catch {
       toast({ title: "Error", description: "Failed to apply implementation.", variant: "destructive" });
     } finally {
@@ -80,7 +82,7 @@ export function ImplementationClient({ implementations }: { implementations: Imp
       });
       if (!res.ok) throw new Error("Failed to rollback");
       toast({ title: "Rolled Back", description: "The implementation has been rolled back." });
-      window.location.reload();
+      router.refresh();
     } catch {
       toast({ title: "Error", description: "Failed to rollback.", variant: "destructive" });
     } finally {

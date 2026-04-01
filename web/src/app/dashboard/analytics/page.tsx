@@ -12,6 +12,7 @@ export default async function AnalyticsPage() {
     prisma.analysis.findMany({
       where: { userId: session!.user.id },
       orderBy: { createdAt: "asc" },
+      take: 200,
       select: {
         id: true,
         createdAt: true,
@@ -25,10 +26,12 @@ export default async function AnalyticsPage() {
     }),
     prisma.suggestion.findMany({
       where: { analysis: { userId: session!.user.id } },
+      take: 500,
       select: { category: true, status: true, priority: true, estimatedSaving: true },
     }),
     prisma.implementation.findMany({
       where: { analysis: { userId: session!.user.id } },
+      take: 200,
       select: { status: true, createdAt: true },
     }),
   ]);

@@ -31,8 +31,7 @@ export default async function AnalysisDetailPage({
     where: { id: params.id, userId: session!.user.id },
     include: {
       suggestions: { orderBy: { priority: "asc" } },
-      implementations: true,
-      documents: true,
+      documents: { select: { id: true, title: true, content: true } },
     },
   });
 

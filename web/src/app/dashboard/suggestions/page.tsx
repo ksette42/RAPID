@@ -11,6 +11,7 @@ export default async function SuggestionsPage() {
   const suggestions = await prisma.suggestion.findMany({
     where: { analysis: { userId: session!.user.id } },
     orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+    take: 100,
     include: {
       analysis: { select: { id: true, title: true, language: true } },
     },

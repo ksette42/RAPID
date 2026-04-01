@@ -27,17 +27,26 @@ async function getDashboardData(userId: string) {
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: 5,
-      include: { suggestions: true },
+      include: {
+        suggestions: {
+          select: { id: true, status: true, estimatedSaving: true },
+        },
+      },
     }),
     prisma.suggestion.findMany({
       where: { analysis: { userId } },
       orderBy: { createdAt: "desc" },
       take: 5,
+      select: {
+        id: true, title: true, category: true, priority: true,
+        estimatedSaving: true, status: true,
+      },
     }),
     prisma.implementation.findMany({
       where: { analysis: { userId } },
       orderBy: { createdAt: "desc" },
       take: 3,
+      select: { id: true, status: true, createdAt: true },
     }),
     prisma.subscription.findUnique({ where: { userId } }),
   ]);
@@ -68,6 +77,7 @@ async function getDashboardData(userId: string) {
 }
 
 export default async function DashboardPage() {
+  // Session already validated in layout — reuse via getServerSession cache
   const session = await getServerSession(authOptions);
   const data = await getDashboardData(session!.user.id);
 
