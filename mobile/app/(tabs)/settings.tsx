@@ -14,7 +14,6 @@ export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
   const [notifications, setNotifications] = useState(true);
   const [analysisAlerts, setAnalysisAlerts] = useState(true);
-  const [billingAlerts, setBillingAlerts] = useState(true);
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -29,14 +28,6 @@ export default function SettingsScreen() {
       },
     ]);
   };
-
-  const planBadgeColors: Record<string, { bg: string; text: string }> = {
-    FREE: { bg: "#1e1e3a", text: "#9ca3af" },
-    STARTER: { bg: "#0c1a3d", text: "#60a5fa" },
-    PRO: { bg: "#2d1b69", text: "#a78bfa" },
-    ENTERPRISE: { bg: "#1c1a0a", text: "#f59e0b" },
-  };
-  const planColor = planBadgeColors[user?.plan ?? "FREE"];
 
   return (
     <ScrollView
@@ -91,49 +82,11 @@ export default function SettingsScreen() {
             <Text style={{ color: "#6b7280", fontSize: 13, marginTop: 2 }}>
               {user?.email ?? ""}
             </Text>
-            <View
-              style={{
-                backgroundColor: planColor.bg,
-                borderRadius: 6,
-                paddingHorizontal: 8,
-                paddingVertical: 3,
-                marginTop: 6,
-                alignSelf: "flex-start",
-              }}
-            >
-              <Text style={{ color: planColor.text, fontSize: 11, fontWeight: "700" }}>
-                {user?.plan ?? "FREE"} PLAN
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Subscription */}
-      <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
-        <Text style={{ color: "#6b7280", fontSize: 12, fontWeight: "600", marginBottom: 10, paddingHorizontal: 4 }}>
-          SUBSCRIPTION
-        </Text>
-        <TouchableOpacity
-          style={{
-            backgroundColor: "#6172f420",
-            borderRadius: 14,
-            padding: 16,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderWidth: 1,
-            borderColor: "#6172f4",
-          }}
-        >
-          <View>
-            <Text style={{ color: "white", fontWeight: "600", fontSize: 14 }}>Upgrade Your Plan</Text>
-            <Text style={{ color: "#9ca3af", fontSize: 12, marginTop: 2 }}>
-              Unlock unlimited analyses and more
+            <Text style={{ color: "#9ca3af", fontSize: 11, marginTop: 6 }}>
+              Update your profile and review app preferences.
             </Text>
           </View>
-          <Text style={{ color: "#8196fa", fontSize: 18 }}>→</Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Notifications */}
@@ -152,7 +105,7 @@ export default function SettingsScreen() {
           {[
             { label: "Push Notifications", desc: "All app notifications", state: notifications, set: setNotifications },
             { label: "Analysis Alerts", desc: "When analysis completes", state: analysisAlerts, set: setAnalysisAlerts },
-            { label: "Billing Alerts", desc: "Invoice & payment info", state: billingAlerts, set: setBillingAlerts },
+            { label: "Findings Ready", desc: "When new findings are ready to review", state: analysisAlerts, set: setAnalysisAlerts },
           ].map((item, i) => (
             <View
               key={item.label}

@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import dynamic from "next/dynamic";
 
 // Split recharts out of the main bundle — only loads when analytics page is visited
@@ -21,14 +20,14 @@ const LazyCharts = dynamic(() => import("./charts"), {
 });
 
 import {
-  TrendingDown,
   ShieldCheck,
   Zap,
   BarChart3,
   Code2,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatSuggestionCategory } from "@/lib/utils";
 
 interface AnalyticsClientProps {
   analyses: Array<{
@@ -55,7 +54,7 @@ interface AnalyticsClientProps {
 
 
 export function AnalyticsClient({ analyses, suggestions, implementations }: AnalyticsClientProps) {
-  const totalSavings = suggestions.reduce((acc, s) => acc + (s.estimatedSaving ?? 0), 0);
+  const totalFindings = suggestions.length;
   const avgReliability = analyses.reduce((acc, a) => acc + (a.reliabilityScore ?? 0), 0) / (analyses.length || 1);
   const avgPerformance = analyses.reduce((acc, a) => acc + (a.performanceScore ?? 0), 0) / (analyses.length || 1);
   const implementedCount = implementations.filter(i => i.status === "COMPLETED").length;
@@ -71,7 +70,7 @@ export function AnalyticsClient({ analyses, suggestions, implementations }: Anal
       return Array.from({ length: 6 }, (_, i) => ({
         month: `M${i + 1}`,
         analyses: 0,
-        savings: 0,
+        findings: 0,
       }));
     }
     return Array.from({ length: 6 }, (_, i) => {
@@ -86,18 +85,22 @@ export function AnalyticsClient({ analyses, suggestions, implementations }: Anal
       return {
         month,
         analyses: monthAnalyses.length,
-        savings: monthAnalyses.reduce((acc, a) => acc + (a.costSavings ?? 0), 0),
+        findings: suggestions.filter((suggestion) => {
+          const created = monthAnalyses.find((analysis) => analysis.id);
+          return Boolean(created) && suggestion.status;
+        }).length,
       };
     });
-  }, [mounted, analyses]);
+  }, [mounted, analyses, suggestions]);
 
   // Category distribution
   const categoryData = Object.entries(
     suggestions.reduce((acc, s) => {
-      acc[s.category] = (acc[s.category] || 0) + 1;
+      const label = formatSuggestionCategory(s.category);
+      acc[label] = (acc[label] || 0) + 1;
       return acc;
     }, {} as Record<string, number>)
-  ).map(([name, value]) => ({ name: name.replace("_", " "), value }));
+  ).map(([name, value]) => ({ name, value }));
 
   // Language distribution
   const languageData = Object.entries(
@@ -113,30 +116,22 @@ export function AnalyticsClient({ analyses, suggestions, implementations }: Anal
     .slice(0, 8)
     .map(([name, value]) => ({ name, value }));
 
-  // Suggestion status breakdown
-  const statusData = [
-    { name: "Pending", value: suggestions.filter(s => s.status === "PENDING").length, color: "#f59e0b" },
-    { name: "Approved", value: suggestions.filter(s => s.status === "APPROVED").length, color: "#6172f4" },
-    { name: "Implemented", value: suggestions.filter(s => s.status === "IMPLEMENTED").length, color: "#22c55e" },
-    { name: "Dismissed", value: suggestions.filter(s => s.status === "DISMISSED" || s.status === "REJECTED").length, color: "#6b7280" },
-  ].filter(s => s.value > 0);
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">Analytics</h1>
         <p className="text-muted-foreground">
-          Track the impact of RAPID on your systems over time.
+          Track how analyses and findings build up over time.
         </p>
       </div>
 
       {/* Key metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-green-500/30 bg-green-500/5">
+        <Card className="border-rapid-500/30 bg-rapid-500/5">
           <CardContent className="p-4">
-            <TrendingDown className="w-5 h-5 text-green-400 mb-2" />
-            <div className="text-2xl font-bold text-green-400">{formatCurrency(totalSavings)}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">Total Potential Savings/mo</div>
+            <Sparkles className="w-5 h-5 text-rapid-400 mb-2" />
+            <div className="text-2xl font-bold text-rapid-400">{totalFindings}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Total Findings</div>
           </CardContent>
         </Card>
         <Card className="border-blue-500/30 bg-blue-500/5">

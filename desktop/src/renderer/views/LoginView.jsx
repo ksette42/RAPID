@@ -54,7 +54,7 @@ export function LoginView({ onLogin, apiUrl, version }) {
           }}>⚡</div>
           <div style={{ fontSize: 32, fontWeight: 700, color: '#8196fa' }}>RAPID</div>
           <div style={{ color: '#4b5563', fontSize: 13, marginTop: 4 }}>
-            Read · Analyze · Patch · Implement · Document
+            Analyze any code or data with clarity
           </div>
           <div style={{ color: '#374151', fontSize: 11, marginTop: 4 }}>v{version}</div>
         </div>
@@ -66,7 +66,7 @@ export function LoginView({ onLogin, apiUrl, version }) {
         }}>
           <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>Connect to RAPID</h2>
           <p style={{ color: '#6b7280', fontSize: 13, marginBottom: 24 }}>
-            Enter your API key to start analyzing code on your machine.
+            Enter your API key to start analyzing files and text on your machine.
           </p>
 
           <form onSubmit={handleSubmit}>

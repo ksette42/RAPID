@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getRequestUser } from "@/lib/request-auth";
 import { z } from "zod";
 
 const analyzeSchema = z.object({
@@ -40,152 +39,234 @@ function detectLanguage(content: string, fileName?: string): string {
   return "Unknown";
 }
 
-function analyzeCostSavings(content: string, language: string): { issues: string[]; savings: number } {
-  const issues: string[] = [];
-  let savings = 0;
+type FindingCategory =
+  | "PERFORMANCE"
+  | "RELIABILITY"
+  | "SECURITY"
+  | "MAINTAINABILITY"
+  | "SCALABILITY";
 
-  // SQL injection / N+1 queries
-  if (/SELECT \* FROM/i.test(content)) {
-    issues.push("SELECT * usage detected - selecting specific columns reduces data transfer by 40-80%");
-    savings += 150;
-  }
-  if (/for.*query|while.*query|\.map.*query/i.test(content)) {
-    issues.push("Potential N+1 query pattern - use batch loading or JOINs");
-    savings += 300;
-  }
+interface GeneratedFinding {
+  title: string;
+  description: string;
+  category: FindingCategory;
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  estimatedEffort: string;
+  codeSnippet?: string;
+  improvedCode?: string;
+}
 
-  // Memory leaks
-  if (/setInterval|setTimeout/.test(content) && !/clearInterval|clearTimeout/.test(content)) {
-    issues.push("Uncleaned timers detected - memory leak risk");
-    savings += 50;
+function pushFinding(findings: GeneratedFinding[], finding: GeneratedFinding) {
+  if (!findings.some((item) => item.title === finding.title)) {
+    findings.push(finding);
   }
+}
 
-  // Inefficient patterns
-  if (/\.filter.*\.map|\.map.*\.filter/.test(content)) {
-    issues.push("Chained filter/map - combine into single reduce for 30% perf improvement");
-    savings += 30;
-  }
-
-  // Missing indexes hint
-  if (/WHERE\s+\w+\s*=/i.test(content) && !/INDEX|CREATE INDEX/i.test(content)) {
-    issues.push("Queries without explicit index hints - consider adding indexes");
-    savings += 200;
-  }
-
-  // Synchronous file ops
-  if (/readFileSync|writeFileSync|existsSync/.test(content)) {
-    issues.push("Synchronous file I/O blocks event loop - use async alternatives");
-    savings += 80;
-  }
-
-  // Hardcoded credentials
-  if (/password\s*=\s*['"]\w+['"]|api_key\s*=\s*['"]\w+['"]/i.test(content)) {
-    issues.push("Hardcoded credentials detected - security risk and operational cost");
-    savings += 0; // Security issue, not cost
-  }
-
-  return { issues, savings };
+function buildFallbackFindings(type: string, language: string): GeneratedFinding[] {
+  return [
+    {
+      title: `Clarify ${language !== "Unknown" ? language : type.toLowerCase()} assumptions`,
+      description:
+        "Document expected inputs, outputs, and edge cases so future reviews can reason about the data quickly.",
+      category: "MAINTAINABILITY",
+      priority: "LOW",
+      estimatedEffort: "30-60 minutes",
+    },
+    {
+      title: "Add stronger validation around incoming data",
+      description:
+        "Validate required fields, shapes, and boundary conditions before processing to reduce avoidable failures.",
+      category: "RELIABILITY",
+      priority: "MEDIUM",
+      estimatedEffort: "1-2 hours",
+    },
+    {
+      title: "Create a repeatable regression check",
+      description:
+        "Capture the expected behavior in tests or sample fixtures so future changes can be reviewed with confidence.",
+      category: "SCALABILITY",
+      priority: "MEDIUM",
+      estimatedEffort: "1-3 hours",
+    },
+  ];
 }
 
 function generateSuggestions(content: string, language: string, type: string) {
-  const suggestions = [];
-  const { issues, savings } = analyzeCostSavings(content, language);
+  const findings: GeneratedFinding[] = [];
 
-  // Core suggestions based on detected issues
-  if (issues.length > 0) {
-    issues.forEach((issue, i) => {
-      suggestions.push({
-        title: issue.split(" - ")[0] || issue,
-        description: issue.split(" - ")[1] || issue,
-        category: i % 2 === 0 ? "COST_SAVING" : "PERFORMANCE",
-        priority: i === 0 ? "HIGH" : "MEDIUM",
-        estimatedSaving: Math.floor(Math.random() * 200) + 50,
-        estimatedEffort: "2-4 hours",
-      });
+  if (/SELECT \*\s+FROM/i.test(content)) {
+    pushFinding(findings, {
+      title: "Select only required fields",
+      description:
+        "Replace broad SELECT * queries with explicit columns to make the dataset easier to review and reduce unnecessary processing.",
+      category: "PERFORMANCE",
+      priority: "HIGH",
+      estimatedEffort: "15-30 minutes",
     });
   }
 
-  // Always suggest a few general improvements
-  suggestions.push({
-    title: "Add request caching layer",
-    description: "Implement Redis or in-memory caching for frequently accessed data. Expected reduction of 60-70% in database load, saving ~$200-400/month.",
-    category: "COST_SAVING",
-    priority: "HIGH",
-    estimatedSaving: 300,
-    estimatedEffort: "4-8 hours",
-    codeSnippet: "// Current: Direct DB call every time\nconst user = await db.findUser(id);",
-    improvedCode: "// Improved: Cache with 5-minute TTL\nconst cached = await redis.get(`user:${id}`);\nconst user = cached ? JSON.parse(cached) : await db.findUser(id);\nif (!cached) await redis.setex(`user:${id}`, 300, JSON.stringify(user));",
-  });
+  if (
+    /query\([^)]*['"`][^'"`]*(SELECT|INSERT|UPDATE|DELETE)[^'"`]*['"`]\s*\+\s*\w+/i.test(content) ||
+    /(SELECT|INSERT|UPDATE|DELETE)[^;\n]*\+\s*\w+/i.test(content)
+  ) {
+    pushFinding(findings, {
+      title: "Parameterize dynamic queries",
+      description:
+        "Avoid concatenating user-controlled values into queries. Use placeholders or query parameters so the analysis is safer and easier to maintain.",
+      category: "SECURITY",
+      priority: "CRITICAL",
+      estimatedEffort: "30-90 minutes",
+      codeSnippet: "db.query('SELECT * FROM users WHERE id = ' + userId)",
+      improvedCode: "db.query('SELECT id, email FROM users WHERE id = ?', [userId])",
+    });
+  }
 
-  suggestions.push({
-    title: "Implement circuit breaker pattern",
-    description: "Add circuit breaker for external service calls to prevent cascade failures. Improves system reliability by 40% and reduces error-induced costs.",
-    category: "RELIABILITY",
-    priority: "HIGH",
-    estimatedSaving: 500,
-    estimatedEffort: "6-12 hours",
-  });
+  if (/for\s*\([^)]*\)\s*{[^}]*\b(query|fetch|axios|request)\b|while\s*\([^)]*\)\s*{[^}]*\b(query|fetch|axios|request)\b/i.test(content)) {
+    pushFinding(findings, {
+      title: "Batch repeated external calls",
+      description:
+        "Repeated queries or network calls inside loops can slow processing dramatically. Batch related work or fetch data once when possible.",
+      category: "SCALABILITY",
+      priority: "HIGH",
+      estimatedEffort: "2-4 hours",
+    });
+  }
 
-  suggestions.push({
-    title: "Add connection pooling",
-    description: "Replace individual database connections with a connection pool. Reduces connection overhead by 80% and infrastructure costs by $100-200/month.",
-    category: "PERFORMANCE",
-    priority: "MEDIUM",
-    estimatedSaving: 150,
-    estimatedEffort: "2-3 hours",
-  });
+  if (/setInterval|setTimeout/.test(content) && !/clearInterval|clearTimeout/.test(content)) {
+    pushFinding(findings, {
+      title: "Clean up long-running timers",
+      description:
+        "Timers should be cleared when the owning process, request, or component is no longer active to avoid stale work and unstable behavior.",
+      category: "RELIABILITY",
+      priority: "MEDIUM",
+      estimatedEffort: "30-60 minutes",
+    });
+  }
 
-  suggestions.push({
-    title: "Enable gzip compression",
-    description: "Add response compression middleware to reduce bandwidth costs by 60-80% for text-based APIs.",
-    category: "COST_SAVING",
-    priority: "LOW",
-    estimatedSaving: 80,
-    estimatedEffort: "30 minutes",
-  });
+  if (/readFileSync|writeFileSync|existsSync/.test(content)) {
+    pushFinding(findings, {
+      title: "Prefer non-blocking file operations",
+      description:
+        "Synchronous file APIs can block processing and make larger analyses feel sluggish. Use async file access where possible.",
+      category: "PERFORMANCE",
+      priority: "MEDIUM",
+      estimatedEffort: "30-90 minutes",
+    });
+  }
 
-  return suggestions.slice(0, 8); // Return top 8 suggestions
+  if (/\.filter\([^)]*\)\.map\(|\.map\([^)]*\)\.filter\(/.test(content)) {
+    pushFinding(findings, {
+      title: "Consolidate repeated array transforms",
+      description:
+        "Chaining multiple passes over the same data is often harder to read and more expensive to process than a single well-named transformation.",
+      category: "MAINTAINABILITY",
+      priority: "LOW",
+      estimatedEffort: "15-45 minutes",
+    });
+  }
+
+  if (/TODO|FIXME|XXX/.test(content)) {
+    pushFinding(findings, {
+      title: "Resolve unresolved implementation markers",
+      description:
+        "Outstanding TODO or FIXME markers usually indicate hidden assumptions that should be completed or documented before this area grows further.",
+      category: "MAINTAINABILITY",
+      priority: "MEDIUM",
+      estimatedEffort: "30-120 minutes",
+    });
+  }
+
+  if (type === "API" || /openapi:|swagger:|paths:/i.test(content)) {
+    pushFinding(findings, {
+      title: "Document failure responses and examples",
+      description:
+        "Include representative error payloads and edge-case examples so API consumers can understand how the data behaves in real usage.",
+      category: "MAINTAINABILITY",
+      priority: "MEDIUM",
+      estimatedEffort: "1-2 hours",
+    });
+  }
+
+  if (type === "DASHBOARD" || /grafana|dataset|chart|metric|panel/i.test(content)) {
+    pushFinding(findings, {
+      title: "Add explicit thresholds and labels",
+      description:
+        "Clear labels, units, and threshold definitions make dashboards easier to interpret and reduce the chance of acting on ambiguous signals.",
+      category: "RELIABILITY",
+      priority: "MEDIUM",
+      estimatedEffort: "30-90 minutes",
+    });
+  }
+
+  if ((type === "GENERAL" || language === "JSON") && /,/.test(content) && content.split("\n").length > 5) {
+    pushFinding(findings, {
+      title: "Normalize and describe key fields",
+      description:
+        "Structured data is easier to analyze when field names, units, and optional values are described consistently across records.",
+      category: "MAINTAINABILITY",
+      priority: "LOW",
+      estimatedEffort: "30-60 minutes",
+    });
+  }
+
+  for (const fallback of buildFallbackFindings(type, language)) {
+    if (findings.length >= 6) break;
+    pushFinding(findings, fallback);
+  }
+
+  return findings.slice(0, 6);
+}
+
+function calculateScores(content: string, suggestions: GeneratedFinding[]) {
+  let reliabilityScore = 88;
+  let performanceScore = 86;
+
+  if (/setInterval|setTimeout/.test(content) && !/clearInterval|clearTimeout/.test(content)) {
+    reliabilityScore -= 10;
+  }
+  if (/TODO|FIXME|XXX/.test(content)) {
+    reliabilityScore -= 6;
+  }
+  if (/query\([^)]*['"`][^'"`]*(SELECT|INSERT|UPDATE|DELETE)[^'"`]*['"`]\s*\+\s*\w+/i.test(content)) {
+    reliabilityScore -= 18;
+  }
+  if (/SELECT \*\s+FROM/i.test(content)) {
+    performanceScore -= 10;
+  }
+  if (/readFileSync|writeFileSync|existsSync/.test(content)) {
+    performanceScore -= 8;
+  }
+  if (/for\s*\([^)]*\)\s*{[^}]*\b(query|fetch|axios|request)\b|while\s*\([^)]*\)\s*{[^}]*\b(query|fetch|axios|request)\b/i.test(content)) {
+    performanceScore -= 14;
+  }
+
+  performanceScore -= Math.min(12, suggestions.filter((s) => s.category === "PERFORMANCE").length * 2);
+  reliabilityScore -= Math.min(12, suggestions.filter((s) => s.category === "RELIABILITY" || s.category === "SECURITY").length * 2);
+
+  return {
+    reliabilityScore: Math.max(45, Math.min(98, reliabilityScore)),
+    performanceScore: Math.max(45, Math.min(98, performanceScore)),
+  };
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const user = await getRequestUser(req);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
     const { title, content, type, fileName } = analyzeSchema.parse(body);
 
-    // Check plan limits
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId: session.user.id },
-    });
-    if (subscription?.plan === "FREE") {
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
-      const count = await prisma.analysis.count({
-        where: { userId: session.user.id, createdAt: { gte: monthStart } },
-      });
-      if (count >= 5) {
-        return NextResponse.json(
-          { error: "Free plan limit reached (5/month). Upgrade to Pro for unlimited analyses." },
-          { status: 403 }
-        );
-      }
-    }
-
     const language = detectLanguage(content, fileName);
     const suggestions = generateSuggestions(content, language, type);
-    const totalSavings = suggestions.reduce((acc, s) => acc + (s.estimatedSaving || 0), 0);
-    const reliabilityScore = Math.floor(Math.random() * 30) + 55; // 55-85
-    const performanceScore = Math.floor(Math.random() * 30) + 50; // 50-80
+    const { reliabilityScore, performanceScore } = calculateScores(content, suggestions);
 
     // Save to DB
     const analysis = await prisma.analysis.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         title,
         type: type as any,
         status: "COMPLETED",
@@ -193,13 +274,14 @@ export async function POST(req: NextRequest) {
         rawContent: content.substring(0, 10000), // Store first 10k chars
         fileName,
         fileSize: content.length,
-        costSavings: totalSavings,
+        costSavings: null,
         reliabilityScore,
         performanceScore,
         analysisResult: {
           language,
-          suggestionsCount: suggestions.length,
+          findingsCount: suggestions.length,
           analyzedAt: new Date().toISOString(),
+          authMethod: user.authMethod,
         },
         suggestions: {
           create: suggestions.map((s) => ({
@@ -207,7 +289,7 @@ export async function POST(req: NextRequest) {
             description: s.description,
             category: s.category as any,
             priority: s.priority as any,
-            estimatedSaving: s.estimatedSaving,
+            estimatedSaving: null,
             estimatedEffort: s.estimatedEffort,
             codeSnippet: s.codeSnippet,
             improvedCode: s.improvedCode,
@@ -221,7 +303,7 @@ export async function POST(req: NextRequest) {
     // Auto-generate documentation
     await prisma.document.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         analysisId: analysis.id,
         title: `Analysis Report: ${title}`,
         type: "TECHNICAL",
@@ -236,14 +318,11 @@ export async function POST(req: NextRequest) {
 
 ## Key Findings
 
-### Cost Savings Opportunity
-Estimated potential savings: **$${totalSavings}/month**
-
-### Suggestions Summary
+### Findings Summary
 ${suggestions.map((s, i) => `${i + 1}. **${s.title}** (${s.priority} priority) - ${s.category.replace("_", " ")}`).join("\n")}
 
-## Recommendations
-Review each suggestion in the Suggestions tab and approve implementations as needed.
+## Next Steps
+Review the findings, capture any code changes you want to make, and update your implementation notes as needed.
 
 ---
 *Generated by RAPID - Read, Analyze, Patch, Implement & Document*`,
@@ -255,9 +334,10 @@ Review each suggestion in the Suggestions tab and approve implementations as nee
         id: analysis.id,
         title: analysis.title,
         language,
-        costSavings: totalSavings,
+        type,
         reliabilityScore,
         performanceScore,
+        findingsCount: suggestions.length,
       },
       suggestions,
     });
@@ -271,11 +351,11 @@ Review each suggestion in the Suggestions tab and approve implementations as nee
 }
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await getRequestUser(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const analyses = await prisma.analysis.findMany({
-    where: { userId: session.user.id },
+    where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     include: {
       suggestions: { select: { id: true, status: true, category: true, priority: true, estimatedSaving: true } },

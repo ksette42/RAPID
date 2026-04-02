@@ -54,7 +54,7 @@ export default function AuthScreen() {
           name: sessionRes.data.user.name,
           email: sessionRes.data.user.email,
           image: sessionRes.data.user.image,
-          plan: sessionRes.data.user.plan ?? "FREE",
+          plan: "",
         });
         setToken(sessionRes.data.user.id);
         router.replace("/(tabs)");
@@ -75,7 +75,7 @@ export default function AuthScreen() {
       name: "Demo User",
       email: "demo@rapid.dev",
       image: null,
-      plan: "PRO",
+      plan: "",
     });
     setToken("demo-token");
     router.replace("/(tabs)");

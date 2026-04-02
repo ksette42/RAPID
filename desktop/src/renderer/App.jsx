@@ -8,7 +8,7 @@ import { LoginView } from './views/LoginView';
 const NAV = [
   { id: 'analyze', label: 'Analyze', icon: '⚡' },
   { id: 'history', label: 'History', icon: '📋' },
-  { id: 'suggestions', label: 'Suggestions', icon: '💡' },
+  { id: 'suggestions', label: 'Findings', icon: '💡' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -16,7 +16,7 @@ export default function App() {
   const [route, setRoute] = useState('analyze');
   const [apiKey, setApiKey] = useState('');
   const [apiUrl, setApiUrl] = useState('https://app.rapid.dev');
-  const [isElectron] = useState(() => typeof window.rapidAPI !== 'undefined');
+  const isElectron = typeof window !== 'undefined' && typeof window.rapidAPI !== 'undefined';
   const [openedFile, setOpenedFile] = useState(null);
   const [version, setVersion] = useState('1.0.0');
 
@@ -36,20 +36,24 @@ export default function App() {
     });
   }, [isElectron]);
 
-  const handleSaveApiKey = useCallback(async (key) => {
+  const handleSaveConfig = useCallback(async (key, nextUrl = apiUrl) => {
     setApiKey(key);
-    if (isElectron) await window.rapidAPI.setConfig('apiKey', key);
-  }, [isElectron]);
+    setApiUrl(nextUrl);
+    if (isElectron) {
+      await window.rapidAPI.setConfig('apiKey', key);
+      await window.rapidAPI.setConfig('apiUrl', nextUrl);
+    }
+  }, [apiUrl, isElectron]);
 
   if (!apiKey) {
-    return <LoginView onLogin={handleSaveApiKey} apiUrl={apiUrl} version={version} />;
+    return <LoginView onLogin={handleSaveConfig} apiUrl={apiUrl} version={version} />;
   }
 
   const views = {
     analyze: <AnalyzeView apiKey={apiKey} apiUrl={apiUrl} openedFile={openedFile} isElectron={isElectron} />,
     history: <HistoryView apiKey={apiKey} apiUrl={apiUrl} onOpenAnalysis={(id) => setRoute('analyze')} />,
     suggestions: <SuggestionsView apiKey={apiKey} apiUrl={apiUrl} />,
-    settings: <SettingsView apiKey={apiKey} apiUrl={apiUrl} onSave={handleSaveApiKey} version={version} isElectron={isElectron} />,
+    settings: <SettingsView apiKey={apiKey} apiUrl={apiUrl} onSave={handleSaveConfig} version={version} isElectron={isElectron} />,
   };
 
   return (
@@ -61,7 +65,7 @@ export default function App() {
         borderRight: '1px solid #1e1e3a',
         display: 'flex',
         flexDirection: 'column',
-        paddingTop: process.platform === 'darwin' ? 32 : 0,
+        paddingTop: 0,
       }}>
         {/* Logo */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #1e1e3a' }}>
@@ -74,7 +78,7 @@ export default function App() {
             }}>⚡</div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 18, color: '#8196fa' }}>RAPID</div>
-              <div style={{ fontSize: 10, color: '#4b5563', marginTop: 1 }}>v{version}</div>
+              <div style={{ fontSize: 10, color: '#4b5563', marginTop: 1 }}>Simple analysis workspace · v{version}</div>
             </div>
           </div>
         </div>

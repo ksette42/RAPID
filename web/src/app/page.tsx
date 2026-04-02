@@ -5,17 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   Zap,
   Code2,
-  TrendingDown,
   ShieldCheck,
   BarChart3,
   GitMerge,
   FileText,
   ArrowRight,
   CheckCircle2,
-  Star,
   Cpu,
-  Database,
-  Globe,
+  Sparkles,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -23,112 +20,89 @@ import { Footer } from "@/components/layout/footer";
 const features = [
   {
     icon: Code2,
-    title: "Universal Code Reader",
+    title: "Analyze any language",
     description:
-      "Analyzes any programming language — Python, JavaScript, Go, Rust, Java, SQL, Terraform, and 50+ more.",
+      "Paste or upload JavaScript, Python, Go, Rust, Java, SQL, YAML, JSON, Terraform, Markdown, and more.",
     color: "text-blue-400",
     bg: "bg-blue-500/10",
   },
   {
     icon: BarChart3,
-    title: "Dashboard Intelligence",
+    title: "Works with any data",
     description:
-      "Reads and analyzes dashboards, metrics, and data patterns to surface hidden performance bottlenecks.",
+      "Review source code, API specs, dashboards, schemas, logs, config files, and structured text in one place.",
     color: "text-purple-400",
     bg: "bg-purple-500/10",
   },
   {
-    icon: TrendingDown,
-    title: "Cost Savings Engine",
+    icon: Sparkles,
+    title: "Clear findings",
     description:
-      "Identifies redundant queries, inefficient loops, and over-provisioned resources to slash your cloud bill.",
-    color: "text-green-400",
-    bg: "bg-green-500/10",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Reliability Improvements",
-    description:
-      "Detects single points of failure, race conditions, and architectural weaknesses before they hit production.",
+      "Get concise findings grouped by performance, reliability, security, maintainability, and scale.",
     color: "text-yellow-400",
     bg: "bg-yellow-500/10",
   },
   {
-    icon: GitMerge,
-    title: "Permissioned Implementation",
+    icon: ShieldCheck,
+    title: "Helpful scores",
     description:
-      "Every suggested change requires your explicit approval. RAPID implements patches only when you say go.",
+      "See easy-to-read reliability and performance scores so you can quickly understand the state of the input.",
+    color: "text-green-400",
+    bg: "bg-green-500/10",
+  },
+  {
+    icon: GitMerge,
+    title: "Review before change",
+    description:
+      "Generated fixes stay permission-based, so you can inspect the suggested code before applying anything.",
     color: "text-rapid-400",
     bg: "bg-rapid-500/10",
   },
   {
     icon: FileText,
-    title: "Auto Documentation",
+    title: "Reports included",
     description:
-      "Generates technical docs, API references, and architecture diagrams automatically from your codebase.",
+      "Each analysis can create a lightweight report you can revisit, search, and share with your team.",
     color: "text-pink-400",
     bg: "bg-pink-500/10",
   },
 ];
 
 const stats = [
-  { label: "Average Cost Reduction", value: "34%", icon: TrendingDown },
-  { label: "Languages Supported", value: "50+", icon: Code2 },
-  { label: "Uptime Improvement", value: "99.9%", icon: ShieldCheck },
-  { label: "Analysis Speed", value: "<30s", icon: Zap },
+  { label: "Languages & formats", value: "50+", icon: Code2 },
+  { label: "Typical analysis time", value: "<30s", icon: Zap },
+  { label: "Core review scores", value: "2", icon: ShieldCheck },
+  { label: "Supported input types", value: "6", icon: BarChart3 },
 ];
 
-const plans = [
+const steps = [
   {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for individuals and small projects",
-    features: [
-      "5 analyses per month",
-      "Basic code analysis",
-      "10 suggestions per analysis",
-      "Community support",
-    ],
-    cta: "Start Free",
-    href: "/auth/signup",
-    highlighted: false,
+    step: "1",
+    label: "Add your input",
+    desc: "Upload a file or paste code, config, schema, logs, or any text-based data.",
+    icon: Code2,
+    color: "bg-blue-500",
   },
   {
-    name: "Pro",
-    price: "$29",
-    period: "per month",
-    description: "For teams that ship fast and need reliability",
-    features: [
-      "Unlimited analyses",
-      "All language support",
-      "Dashboard analysis",
-      "One-click implementation",
-      "Auto-documentation",
-      "Priority support",
-      "API access",
-    ],
-    cta: "Start Pro Trial",
-    href: "/auth/signup?plan=pro",
-    highlighted: true,
+    step: "2",
+    label: "Run analysis",
+    desc: "RAPID detects the language or data type and reviews it for useful patterns and issues.",
+    icon: Cpu,
+    color: "bg-purple-500",
   },
   {
-    name: "Enterprise",
-    price: "$99",
-    period: "per month",
-    description: "For organizations requiring compliance and scale",
-    features: [
-      "Everything in Pro",
-      "SSO / SAML",
-      "On-premise deployment",
-      "Custom integrations",
-      "SLA guarantee",
-      "Dedicated engineer",
-      "Audit logs",
-    ],
-    cta: "Contact Sales",
-    href: "/contact",
-    highlighted: false,
+    step: "3",
+    label: "Review findings",
+    desc: "Explore prioritized findings, scores, and suggested improvements in a clean dashboard.",
+    icon: Sparkles,
+    color: "bg-yellow-500",
+  },
+  {
+    step: "4",
+    label: "Document or implement",
+    desc: "Save the report, share it, or inspect suggested code changes before applying them.",
+    icon: FileText,
+    color: "bg-pink-500",
   },
 ];
 
@@ -147,51 +121,47 @@ export default function HomePage() {
         <div className="container mx-auto px-4 text-center">
           <Badge variant="info" className="mb-6 text-sm px-4 py-1.5">
             <Zap className="w-3.5 h-3.5 mr-1.5" />
-            AI-Powered Code & Data Intelligence
+            Simple AI analysis for any code or data
           </Badge>
 
           <h1 className="text-5xl lg:text-7xl font-bold tracking-tight mb-6">
             <span className="text-gradient">RAPID</span>
             <br />
             <span className="text-foreground/90 text-4xl lg:text-5xl">
-              Read · Analyze · Patch · Implement · Document
+              Analyze any code or data with clarity
             </span>
           </h1>
 
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
-            Engineering teams lose millions to inefficient code, redundant infrastructure, and
-            undetected failure points. RAPID gives you an intelligent layer that continuously
-            reads your systems — code, databases, dashboards, and APIs — identifies exactly where{" "}
-            <span className="text-green-400 font-medium">money is being wasted</span> and where{" "}
-            <span className="text-blue-400 font-medium">reliability is at risk</span>, then
-            delivers precise, reviewed, and permission-gated improvements so your team ships
-            faster with confidence.
+            RAPID is a clean workspace for analyzing source code, schemas, dashboards, APIs, and
+            general data. Paste text or upload a file, review clear findings, and keep suggested
+            changes and documentation in one simple flow.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button variant="gradient" size="xl" asChild>
               <Link href="/auth/signup">
-                Get Started Free
+                Open the App
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
             <Button variant="outline" size="xl" asChild>
-              <Link href="/dashboard">View Demo</Link>
+              <Link href="/dashboard/analyze">Start Analyzing</Link>
             </Button>
           </div>
 
           <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-green-400" />
-              No credit card required
+              Upload or paste input
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-green-400" />
-              Free tier forever
+              Works across many languages
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-green-400" />
-              Setup in 2 minutes
+              Clear review workflow
             </span>
           </div>
         </div>
@@ -217,11 +187,11 @@ export default function HomePage() {
         <div className="text-center mb-16">
           <Badge variant="purple" className="mb-4">Features</Badge>
           <h2 className="text-4xl font-bold mb-4">
-            Everything you need to optimize your systems
+            A focused workflow that stays easy to use
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            From reading legacy COBOL to modern microservices, RAPID understands
-            your stack and tells you exactly what to fix.
+            RAPID keeps the experience simple: analyze the input, understand the findings,
+            and decide what to do next.
           </p>
         </div>
 
@@ -245,25 +215,19 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <Badge variant="success" className="mb-4">How It Works</Badge>
-            <h2 className="text-4xl font-bold mb-4">Five steps to a faster, cheaper system</h2>
+            <h2 className="text-4xl font-bold mb-4">A simple four-step analysis flow</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-            {[
-              { step: "R", label: "Read", desc: "Upload code, paste snippets, or connect your repo", icon: Code2, color: "bg-blue-500" },
-              { step: "A", label: "Analyze", desc: "AI engine scans for inefficiencies and patterns", icon: Cpu, color: "bg-purple-500" },
-              { step: "P", label: "Patch", desc: "Generates precise fixes with before/after diffs", icon: GitMerge, color: "bg-yellow-500" },
-              { step: "I", label: "Implement", desc: "Apply changes with a single click after your review", icon: Zap, color: "bg-green-500" },
-              { step: "D", label: "Document", desc: "Auto-generates docs for every change made", icon: FileText, color: "bg-pink-500" },
-            ].map((item, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+            {steps.map((item, i) => (
               <div key={item.step} className="flex flex-col items-center text-center">
                 <div className={`w-16 h-16 rounded-2xl ${item.color} flex items-center justify-center text-white text-2xl font-bold mb-3 shadow-lg`}>
                   {item.step}
                 </div>
                 <h3 className="font-semibold text-lg mb-1">{item.label}</h3>
                 <p className="text-sm text-muted-foreground">{item.desc}</p>
-                {i < 4 && (
-                  <ArrowRight className="hidden md:block absolute translate-x-32 w-5 h-5 text-muted-foreground mt-8" />
+                {i < steps.length - 1 && (
+                  <ArrowRight className="hidden md:block absolute translate-x-36 w-5 h-5 text-muted-foreground mt-8" />
                 )}
               </div>
             ))}
@@ -271,74 +235,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="py-24 container mx-auto px-4" id="pricing">
-        <div className="text-center mb-16">
-          <Badge variant="warning" className="mb-4">Pricing</Badge>
-          <h2 className="text-4xl font-bold mb-4">Simple, transparent pricing</h2>
-          <p className="text-muted-foreground text-lg">Start free. Scale as you grow.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {plans.map((plan) => (
-            <Card
-              key={plan.name}
-              className={`relative ${
-                plan.highlighted
-                  ? "border-rapid-500 shadow-xl shadow-rapid-500/20 scale-105"
-                  : "border-border/50"
-              }`}
-            >
-              {plan.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge variant="default" className="bg-rapid-500 text-white px-4">
-                    <Star className="w-3 h-3 mr-1" />
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-muted-foreground">/{plan.period}</span>
-                </div>
-                <CardDescription>{plan.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full"
-                  variant={plan.highlighted ? "gradient" : "outline"}
-                  asChild
-                >
-                  <Link href={plan.href}>{plan.cta}</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="py-24 bg-gradient-to-r from-rapid-900/50 via-purple-900/30 to-rapid-900/50 border-y border-border/30">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-4">
-            Ready to optimize your systems?
+            Ready to analyze your data?
           </h2>
           <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-            Join thousands of engineers using RAPID to cut costs and improve reliability.
+            Open RAPID, add your input, and review clear findings in a focused workspace.
           </p>
           <Button variant="gradient" size="xl" asChild>
-            <Link href="/auth/signup">
-              Start for Free
+            <Link href="/dashboard/analyze">
+              Go to Analyze
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
           </Button>

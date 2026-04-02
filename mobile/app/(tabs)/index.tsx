@@ -11,9 +11,9 @@ import { useAuthStore } from "@/lib/store";
 
 const DEMO_STATS = {
   totalAnalyses: 12,
-  pendingSuggestions: 5,
+  pendingFindings: 5,
   implementedChanges: 8,
-  costSavings: 2340,
+  reportsReady: 6,
 };
 
 const DEMO_ANALYSES = [
@@ -22,7 +22,6 @@ const DEMO_ANALYSES = [
     title: "payment-service.ts",
     language: "TypeScript",
     status: "COMPLETED",
-    costSavings: 450,
     createdAt: "2026-03-30",
   },
   {
@@ -30,7 +29,6 @@ const DEMO_ANALYSES = [
     title: "database-queries.sql",
     language: "SQL",
     status: "COMPLETED",
-    costSavings: 890,
     createdAt: "2026-03-29",
   },
   {
@@ -38,7 +36,6 @@ const DEMO_ANALYSES = [
     title: "auth-middleware.go",
     language: "Go",
     status: "PROCESSING",
-    costSavings: 0,
     createdAt: "2026-03-31",
   },
 ];
@@ -103,11 +100,6 @@ function AnalysisRow({ analysis }: any) {
         </Text>
       </View>
       <View style={{ alignItems: "flex-end" }}>
-        {analysis.costSavings > 0 && (
-          <Text style={{ color: "#22c55e", fontSize: 12, fontWeight: "600" }}>
-            -${analysis.costSavings}/mo
-          </Text>
-        )}
         <View
           style={{
             backgroundColor: statusColors[analysis.status] + "20",
@@ -173,7 +165,7 @@ export default function HomeScreen() {
           }}
         >
           <Text style={{ color: "#8196fa", fontSize: 12, fontWeight: "600" }}>
-            {user?.plan ?? "FREE"} PLAN
+            Analysis workspace
           </Text>
         </View>
       </View>
@@ -181,12 +173,12 @@ export default function HomeScreen() {
       {/* Stats */}
       <View style={{ padding: 16 }}>
         <Text style={{ color: "white", fontWeight: "700", fontSize: 16, marginBottom: 12 }}>
-          Your Impact
+          Overview
         </Text>
         <View style={{ flexDirection: "row", marginHorizontal: -4 }}>
           <StatCard label="Analyses" value={DEMO_STATS.totalAnalyses} color="#6172f4" icon="⚡" />
-          <StatCard label="Suggestions" value={DEMO_STATS.pendingSuggestions} color="#f59e0b" icon="💡" />
-          <StatCard label="Savings/mo" value={`$${DEMO_STATS.costSavings}`} color="#22c55e" icon="📉" />
+          <StatCard label="Findings" value={DEMO_STATS.pendingFindings} color="#f59e0b" icon="💡" />
+          <StatCard label="Reports" value={DEMO_STATS.reportsReady} color="#22c55e" icon="📄" />
         </View>
       </View>
 
@@ -227,7 +219,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 24, marginBottom: 4 }}>💡</Text>
-            <Text style={{ color: "white", fontWeight: "700", fontSize: 13 }}>Suggestions</Text>
+            <Text style={{ color: "white", fontWeight: "700", fontSize: 13 }}>Findings</Text>
           </TouchableOpacity>
         </View>
       </View>

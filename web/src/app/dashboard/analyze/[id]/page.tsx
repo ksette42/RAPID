@@ -8,17 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Code2,
-  TrendingDown,
   ShieldCheck,
   Zap,
-  Lightbulb,
+  Sparkles,
   FileText,
   Clock,
-  CheckCircle2,
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate, formatSuggestionCategory } from "@/lib/utils";
 
 export default async function AnalysisDetailPage({
   params,
@@ -81,14 +79,13 @@ export default async function AnalysisDetailPage({
 
       {/* Score Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-green-500/30 bg-green-500/5">
+        <Card className="border-rapid-500/30 bg-rapid-500/5">
           <CardContent className="p-4 text-center">
-            <TrendingDown className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-green-400">
-              {formatCurrency(analysis.costSavings ?? 0)}
-              <span className="text-sm font-normal text-muted-foreground">/mo</span>
+            <Sparkles className="w-6 h-6 text-rapid-400 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-rapid-400">
+              {analysis.suggestions.length}
             </div>
-            <p className="text-sm text-muted-foreground">Potential Cost Savings</p>
+            <p className="text-sm text-muted-foreground">Findings</p>
           </CardContent>
         </Card>
         <Card className="border-blue-500/30 bg-blue-500/5">
@@ -116,7 +113,7 @@ export default async function AnalysisDetailPage({
       <Tabs defaultValue="suggestions">
         <TabsList>
           <TabsTrigger value="suggestions">
-            Suggestions ({analysis.suggestions.length})
+            Findings ({analysis.suggestions.length})
           </TabsTrigger>
           <TabsTrigger value="documents">
             Documents ({analysis.documents.length})
@@ -136,22 +133,15 @@ export default async function AnalysisDetailPage({
                       {s.priority}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
-                      {s.category.replace("_", " ")}
+                      {formatSuggestionCategory(s.category)}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {s.estimatedSaving && s.estimatedSaving > 0 && (
-                      <Badge variant="success" className="text-xs">
-                        Save {formatCurrency(s.estimatedSaving)}/mo
-                      </Badge>
-                    )}
-                    <Badge
-                      variant={s.status === "IMPLEMENTED" ? "success" : s.status === "APPROVED" ? "info" : "secondary"}
-                      className="text-xs"
-                    >
-                      {s.status}
-                    </Badge>
-                  </div>
+                  <Badge
+                    variant={s.status === "IMPLEMENTED" ? "success" : s.status === "APPROVED" ? "info" : "secondary"}
+                    className="text-xs"
+                  >
+                    {s.status}
+                  </Badge>
                 </div>
                 <h3 className="font-medium mb-1">{s.title}</h3>
                 <p className="text-sm text-muted-foreground">{s.description}</p>

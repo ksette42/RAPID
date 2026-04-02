@@ -60,7 +60,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="suggestions"
         options={{
-          title: "Suggestions",
+          title: "Findings",
           tabBarIcon: ({ focused }) => <TabIcon name="suggestions" focused={focused} />,
         }}
       />

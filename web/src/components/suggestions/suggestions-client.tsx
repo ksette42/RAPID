@@ -10,7 +10,6 @@ import {
   XCircle,
   GitMerge,
   Lightbulb,
-  TrendingDown,
   ShieldCheck,
   Zap,
   Lock,
@@ -20,7 +19,7 @@ import {
   Filter,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatSuggestionCategory } from "@/lib/utils";
 import Link from "next/link";
 
 interface Suggestion {
@@ -42,7 +41,7 @@ interface Suggestion {
 }
 
 const categoryIcons: Record<string, any> = {
-  COST_SAVING: TrendingDown,
+  COST_SAVING: Zap,
   PERFORMANCE: Zap,
   RELIABILITY: ShieldCheck,
   SECURITY: Lock,
@@ -51,7 +50,7 @@ const categoryIcons: Record<string, any> = {
 };
 
 const categoryColors: Record<string, string> = {
-  COST_SAVING: "text-green-400",
+  COST_SAVING: "text-cyan-400",
   PERFORMANCE: "text-blue-400",
   RELIABILITY: "text-yellow-400",
   SECURITY: "text-red-400",
@@ -100,16 +99,11 @@ const SuggestionCard = memo(function SuggestionCard({
                 >
                   {suggestion.priority}
                 </Badge>
-                {suggestion.estimatedSaving && suggestion.estimatedSaving > 0 && (
-                  <Badge variant="success" className="text-xs">
-                    {formatCurrency(suggestion.estimatedSaving)}/mo
-                  </Badge>
-                )}
               </div>
             </div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline" className="text-xs">
-                {suggestion.category.replace("_", " ")}
+                {formatSuggestionCategory(suggestion.category)}
               </Badge>
               <span className="text-xs text-muted-foreground">
                 {suggestion.analysis.title}
@@ -204,8 +198,6 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
   const implemented = suggestions.filter((s) => s.status === "IMPLEMENTED");
   const dismissed = suggestions.filter((s) => s.status === "DISMISSED" || s.status === "REJECTED");
 
-  const totalSavings = pending.reduce((acc, s) => acc + (s.estimatedSaving ?? 0), 0);
-
   const handleAction = async (suggestionId: string, action: "approve" | "dismiss" | "implement") => {
     setLoading(suggestionId);
     try {
@@ -253,22 +245,14 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Suggestions</h1>
+          <h1 className="text-2xl font-bold">Findings</h1>
           <p className="text-muted-foreground">
-            Review and approve AI-generated improvements for your systems.
+            Review and approve AI-generated findings for your analyses.
           </p>
         </div>
-        {totalSavings > 0 && (
-          <Card className="border-green-500/30 bg-green-500/5 p-3">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="w-4 h-4 text-green-400" />
-              <div>
-                <p className="text-xs text-muted-foreground">Pending Savings</p>
-                <p className="text-lg font-bold text-green-400">{formatCurrency(totalSavings)}/mo</p>
-              </div>
-            </div>
-          </Card>
-        )}
+        <Badge variant="outline" className="px-3 py-1 text-xs">
+          {pending.length} awaiting review
+        </Badge>
       </div>
 
       {/* Category filter */}
@@ -284,7 +268,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
               onClick={() => setFilter(cat)}
             >
               {Icon && <Icon className="w-3 h-3 mr-1.5" />}
-              {cat.replace("_", " ")}
+              {cat === "ALL" ? cat : formatSuggestionCategory(cat)}
             </Button>
           );
         })}
@@ -309,9 +293,9 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
           {filterSuggestions(pending).length === 0 ? (
             <div className="text-center py-16">
               <Lightbulb className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="font-medium">No pending suggestions</p>
+              <p className="font-medium">No pending findings</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Run an analysis to get improvement suggestions
+                Run an analysis to generate findings
               </p>
               <Button variant="gradient" size="sm" className="mt-4" asChild>
                 <Link href="/dashboard/analyze">Run Analysis</Link>
@@ -327,7 +311,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
         <TabsContent value="approved" className="mt-4 space-y-3">
           {filterSuggestions(approved).length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No approved suggestions yet</p>
+              <p className="text-muted-foreground">No approved findings yet</p>
             </div>
           ) : (
             filterSuggestions(approved).map((s) => <SuggestionCard key={s.id} suggestion={s} expandedId={expandedId} loading={loading} onExpand={setExpandedId} onAction={handleAction} />)
@@ -337,7 +321,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
         <TabsContent value="implemented" className="mt-4 space-y-3">
           {filterSuggestions(implemented).length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No implemented suggestions yet</p>
+              <p className="text-muted-foreground">No implemented findings yet</p>
             </div>
           ) : (
             filterSuggestions(implemented).map((s) => <SuggestionCard key={s.id} suggestion={s} expandedId={expandedId} loading={loading} onExpand={setExpandedId} onAction={handleAction} />)
@@ -347,7 +331,7 @@ export function SuggestionsClient({ suggestions: initialSuggestions }: { suggest
         <TabsContent value="dismissed" className="mt-4 space-y-3">
           {filterSuggestions(dismissed).length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No dismissed suggestions</p>
+              <p className="text-muted-foreground">No dismissed findings</p>
             </div>
           ) : (
             filterSuggestions(dismissed).map((s) => <SuggestionCard key={s.id} suggestion={s} expandedId={expandedId} loading={loading} onExpand={setExpandedId} onAction={handleAction} />)

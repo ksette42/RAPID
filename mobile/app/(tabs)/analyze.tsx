@@ -19,7 +19,7 @@ const ANALYSIS_TYPES = [
 ];
 
 const DEMO_RESULT = {
-  costSavings: 1240,
+  findingsCount: 4,
   reliabilityScore: 72,
   performanceScore: 68,
   suggestions: [
@@ -27,28 +27,24 @@ const DEMO_RESULT = {
       title: "Replace SELECT * with specific columns",
       category: "COST_SAVING",
       priority: "HIGH",
-      estimatedSaving: 300,
-      description: "Reduces data transfer by 60-80%, saving ~$300/month in bandwidth and DB costs.",
+      description: "Selecting only the required fields keeps the query easier to review and avoids unnecessary work.",
     },
     {
       title: "Add database connection pooling",
       category: "PERFORMANCE",
       priority: "HIGH",
-      estimatedSaving: 200,
-      description: "Reduces connection overhead by 80%, improving response times by 3x.",
+      description: "Reuse connections consistently so request handling stays stable under heavier load.",
     },
     {
       title: "Implement Redis caching",
       category: "COST_SAVING",
       priority: "MEDIUM",
-      estimatedSaving: 400,
-      description: "Cache frequent queries to reduce database load by 70%.",
+      description: "Cache frequently requested data to reduce repeated work and improve response time consistency.",
     },
     {
       title: "Add circuit breaker pattern",
       category: "RELIABILITY",
       priority: "HIGH",
-      estimatedSaving: 340,
       description: "Prevents cascade failures, improving system reliability by 40%.",
     },
   ],
@@ -87,6 +83,8 @@ export default function AnalyzeScreen() {
     RELIABILITY: "#f59e0b",
     SECURITY: "#ef4444",
   };
+  const formatCategory = (category: string) =>
+    (category === "COST_SAVING" ? "EFFICIENCY" : category).replace(/_/g, " ");
 
   return (
     <ScrollView
@@ -106,7 +104,7 @@ export default function AnalyzeScreen() {
       >
         <Text style={{ color: "white", fontSize: 24, fontWeight: "bold" }}>Analyze</Text>
         <Text style={{ color: "#6b7280", fontSize: 14, marginTop: 4 }}>
-          Upload or paste your code for AI analysis
+          Paste code or any text-based data to review findings quickly
         </Text>
       </View>
 
@@ -165,7 +163,7 @@ export default function AnalyzeScreen() {
               borderWidth: 1,
               borderColor: "#1e1e3a",
             }}
-            placeholder="e.g. payment-service analysis"
+            placeholder="e.g. customer-events review"
             placeholderTextColor="#4b5563"
             value={title}
             onChangeText={setTitle}
@@ -190,7 +188,7 @@ export default function AnalyzeScreen() {
               minHeight: 200,
               textAlignVertical: "top",
             }}
-            placeholder={`// Paste your code here\nfunction getData() {\n  return db.query('SELECT * FROM users');\n}`}
+            placeholder={`// Paste code or data here\nfunction getData() {\n  return db.query('SELECT * FROM users');\n}`}
             placeholderTextColor="#374151"
             multiline
             value={code}
@@ -247,11 +245,11 @@ export default function AnalyzeScreen() {
                   alignItems: "center",
                 }}
               >
-                <Text style={{ fontSize: 20 }}>📉</Text>
+                <Text style={{ fontSize: 20 }}>💡</Text>
                 <Text style={{ color: "#22c55e", fontSize: 20, fontWeight: "bold", marginTop: 4 }}>
-                  ${result.costSavings}
+                  {result.findingsCount}
                 </Text>
-                <Text style={{ color: "#4ade80", fontSize: 10, textAlign: "center" }}>Savings/mo</Text>
+                <Text style={{ color: "#4ade80", fontSize: 10, textAlign: "center" }}>Findings</Text>
               </View>
               <View
                 style={{
@@ -289,9 +287,9 @@ export default function AnalyzeScreen() {
               </View>
             </View>
 
-            {/* Suggestions */}
+            {/* Findings */}
             <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
-              {result.suggestions.length} Suggestions
+              {result.suggestions.length} Findings
             </Text>
             {result.suggestions.map((s, i) => (
               <View
@@ -331,11 +329,6 @@ export default function AnalyzeScreen() {
                       {s.category.replace("_", " ")}
                     </Text>
                   </View>
-                  {s.estimatedSaving > 0 && (
-                    <Text style={{ color: "#22c55e", fontSize: 12, fontWeight: "600", marginLeft: "auto" }}>
-                      +${s.estimatedSaving}/mo
-                    </Text>
-                  )}
                 </View>
                 <Text style={{ color: "white", fontWeight: "600", fontSize: 14, marginBottom: 4 }}>
                   {s.title}
@@ -357,7 +350,7 @@ export default function AnalyzeScreen() {
               }}
             >
               <Text style={{ color: "#8196fa", fontWeight: "700", fontSize: 14 }}>
-                💡 Review & Implement Suggestions
+                💡 Review Findings
               </Text>
             </TouchableOpacity>
           </View>

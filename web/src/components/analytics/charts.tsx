@@ -16,7 +16,7 @@ const tooltipStyle = {
 };
 
 interface ChartsProps {
-  monthlyData: Array<{ month: string; analyses: number; savings: number }>;
+  monthlyData: Array<{ month: string; analyses: number; findings: number }>;
   categoryData: Array<{ name: string; value: number }>;
   languageData: Array<{ name: string; value: number }>;
 }
@@ -44,17 +44,17 @@ export default function Charts({ monthlyData, categoryData, languageData }: Char
 
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="text-base">Cost Savings Identified</CardTitle>
-          <CardDescription>Monthly potential savings discovered</CardDescription>
+          <CardTitle className="text-base">Findings Discovered</CardTitle>
+          <CardDescription>Total findings identified in each month</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${v}`} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`$${v}`, "Savings"]} />
-              <Line type="monotone" dataKey="savings" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e", r: 4 }} />
+              <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [v, "Findings"]} />
+              <Line type="monotone" dataKey="findings" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e", r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -63,7 +63,7 @@ export default function Charts({ monthlyData, categoryData, languageData }: Char
       {categoryData.length > 0 && (
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-base">Suggestions by Category</CardTitle>
+            <CardTitle className="text-base">Findings by Category</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>

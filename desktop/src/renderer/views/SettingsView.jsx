@@ -28,13 +28,13 @@ export function SettingsView({ apiKey, apiUrl, onSave, version, isElectron }) {
   return (
     <div style={{ padding: 24, maxWidth: 560 }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Settings</h1>
-      <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 28 }}>Configure your RAPID desktop app.</p>
+      <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 28 }}>Configure your RAPID desktop analyzer.</p>
 
       <div style={{ backgroundColor: '#13131f', borderRadius: 14, padding: 20, border: '1px solid #1e1e3a', marginBottom: 16 }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: '#9ca3af' }}>CONNECTION</h3>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, color: '#9ca3af', display: 'block', marginBottom: 6 }}>RAPID Server URL</label>
+          <label style={{ fontSize: 12, color: '#9ca3af', display: 'block', marginBottom: 6 }}>Server URL</label>
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -78,7 +78,7 @@ export function SettingsView({ apiKey, apiUrl, onSave, version, isElectron }) {
         {[
           { label: '🌐 Open Dashboard', action: openDashboard },
           { label: '🔑 Manage API Keys', action: openApiKeys },
-          { label: '💳 Billing & Plans', action: () => { if (isElectron) window.rapidAPI.openExternal(`${url}/dashboard/billing`); } },
+          { label: '📄 Open Reports', action: () => { if (isElectron) window.rapidAPI.openExternal(`${url}/dashboard/documentation`); } },
         ].map((item) => (
           <button key={item.label} onClick={item.action} style={{
             display: 'block', width: '100%', padding: '11px 14px', marginBottom: 8,

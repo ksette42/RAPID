@@ -19,7 +19,7 @@ export function HistoryView({ apiKey, apiUrl }) {
   return (
     <div style={{ padding: 24 }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>History</h1>
-      <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 24 }}>Your recent analyses.</p>
+      <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 24 }}>Your recent analyses and saved results.</p>
 
       {loading && <div style={{ color: '#6b7280', textAlign: 'center', paddingTop: 60 }}>Loading...</div>}
       {error && (
@@ -52,11 +52,6 @@ export function HistoryView({ apiKey, apiUrl }) {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {a.costSavings > 0 && (
-                <span style={{ color: '#22c55e', fontSize: 13, fontWeight: 600 }}>
-                  -${a.costSavings}/mo
-                </span>
-              )}
               <span style={{
                 fontSize: 11, padding: '3px 8px', borderRadius: 6, fontWeight: 600,
                 backgroundColor: ((statusColors[a.status]) || '#6b7280') + '20',

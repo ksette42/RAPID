@@ -12,7 +12,7 @@ const DEMO_DOCUMENTS = [
     id: "1",
     title: "Analysis Report: payment-service.ts",
     type: "TECHNICAL",
-    preview: "Analysis identified 4 critical improvements with $1,240/month cost savings potential...",
+    preview: "Analysis identified 4 important findings across reliability, performance, and maintainability...",
     createdAt: "Mar 30, 2026",
   },
   {

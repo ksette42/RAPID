@@ -14,9 +14,6 @@ import {
   Upload,
   Code2,
   Loader2,
-  CheckCircle2,
-  AlertTriangle,
-  TrendingDown,
   ShieldCheck,
   Zap,
   FileText,
@@ -24,10 +21,10 @@ import {
   Play,
   Clock,
   BarChart3,
-  Lightbulb,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate, formatCurrency, getLanguageFromExtension } from "@/lib/utils";
+import { formatDate, formatSuggestionCategory, getLanguageFromExtension } from "@/lib/utils";
 import Link from "next/link";
 
 interface Analysis {
@@ -36,11 +33,10 @@ interface Analysis {
   status: string;
   language: string | null;
   type: string;
-  costSavings: number | null;
   reliabilityScore: number | null;
   performanceScore: number | null;
   createdAt: Date;
-  suggestions: Array<{ id: string; status: string; estimatedSaving: number | null }>;
+  suggestions: Array<{ id: string; status: string; category?: string | null }>;
 }
 
 const analysisTypes = [
@@ -126,7 +122,7 @@ export function AnalyzeClient({ analyses }: { analyses: Analysis[] }) {
 
       const data = await res.json();
       setAnalysisResult(data);
-      toast({ title: "Analysis Complete!", description: "Your code has been analyzed successfully." });
+      toast({ title: "Analysis Complete!", description: "Your data has been analyzed successfully." });
       setActiveTab("result");
     } catch (err: any) {
       toast({ title: "Analysis Failed", description: err.message, variant: "destructive" });
@@ -141,7 +137,7 @@ export function AnalyzeClient({ analyses }: { analyses: Analysis[] }) {
       <div>
         <h1 className="text-2xl font-bold">Analyze</h1>
         <p className="text-muted-foreground">
-          Upload code, paste snippets, or connect your repository for AI-powered analysis.
+          Upload a file or paste any code or text-based data for a quick AI review.
         </p>
       </div>
 
@@ -184,13 +180,13 @@ export function AnalyzeClient({ analyses }: { analyses: Analysis[] }) {
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle className="text-base">Code or Data</CardTitle>
-              <CardDescription>Upload a file or paste your code directly</CardDescription>
+              <CardDescription>Upload a file or paste your content directly</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Analysis Title</Label>
                 <Input
-                  placeholder="e.g. payment-service analysis"
+                  placeholder="e.g. customer-events review"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
@@ -228,13 +224,13 @@ export function AnalyzeClient({ analyses }: { analyses: Analysis[] }) {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">or paste code</span>
+                  <span className="bg-background px-2 text-muted-foreground">or paste content</span>
                 </div>
               </div>
 
               <textarea
                 className="w-full h-64 p-3 rounded-lg border border-input bg-background text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder={`Paste your code here...\n\n// Example:\nfunction getUserData(userId) {\n  return db.query('SELECT * FROM users WHERE id = ' + userId);\n}`}
+                placeholder={`Paste any code or data here...\n\nExample:\nfunction getUserData(userId) {\n  return db.query('SELECT * FROM users WHERE id = ' + userId);\n}`}
                 value={codeContent}
                 onChange={(e) => setCodeContent(e.target.value)}
               />
@@ -291,7 +287,13 @@ export function AnalyzeClient({ analyses }: { analyses: Analysis[] }) {
                 <div className="divide-y divide-border/50">
                   {analyses.map((analysis) => {
                     const pendingSuggestions = analysis.suggestions.filter(s => s.status === "PENDING").length;
-                    const totalSavings = analysis.suggestions.reduce((acc, s) => acc + (s.estimatedSaving ?? 0), 0);
+                    const categories = Array.from(
+                      new Set(
+                        analysis.suggestions
+                          .map((suggestion) => suggestion.category)
+                          .filter(Boolean)
+                      )
+                    ).slice(0, 2);
                     return (
                       <Link
                         key={analysis.id}
@@ -317,15 +319,14 @@ export function AnalyzeClient({ analyses }: { analyses: Analysis[] }) {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          {totalSavings > 0 && (
-                            <Badge variant="success" className="text-xs hidden sm:flex">
-                              <TrendingDown className="w-3 h-3 mr-1" />
-                              Save {formatCurrency(totalSavings)}/mo
+                          {categories.map((category) => (
+                            <Badge key={category} variant="outline" className="text-xs hidden sm:flex">
+                              {formatSuggestionCategory(category as string)}
                             </Badge>
-                          )}
+                          ))}
                           {pendingSuggestions > 0 && (
                             <Badge variant="warning" className="text-xs">
-                              {pendingSuggestions} pending
+                              {pendingSuggestions} open
                             </Badge>
                           )}
                           <Badge
@@ -369,14 +370,13 @@ function AnalysisResultView({ result }: { result: any }) {
     <div className="space-y-6">
       {/* Score Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-green-500/30 bg-green-500/5">
+        <Card className="border-rapid-500/30 bg-rapid-500/5">
           <CardContent className="p-4 text-center">
-            <TrendingDown className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-green-400">
-              {formatCurrency(analysis?.costSavings ?? 0)}
-              <span className="text-sm font-normal text-muted-foreground">/mo</span>
+            <Sparkles className="w-6 h-6 text-rapid-400 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-rapid-400">
+              {analysis?.findingsCount ?? suggestions?.length ?? 0}
             </div>
-            <p className="text-sm text-muted-foreground">Potential Cost Savings</p>
+            <p className="text-sm text-muted-foreground">Findings</p>
           </CardContent>
         </Card>
         <Card className="border-blue-500/30 bg-blue-500/5">
@@ -405,10 +405,10 @@ function AnalysisResultView({ result }: { result: any }) {
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="text-base">
-            {suggestions?.length ?? 0} Improvement Suggestions
+            {suggestions?.length ?? 0} Findings
           </CardTitle>
           <CardDescription>
-            Ordered by priority and estimated impact
+            Ordered by priority so you can review the most important issues first.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -424,14 +424,9 @@ function AnalysisResultView({ result }: { result: any }) {
                     {s.priority}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
-                    {s.category?.replace("_", " ")}
+                    {formatSuggestionCategory(s.category ?? "")}
                   </Badge>
                 </div>
-                {s.estimatedSaving > 0 && (
-                  <Badge variant="success" className="text-xs">
-                    Save {formatCurrency(s.estimatedSaving)}/mo
-                  </Badge>
-                )}
               </div>
               <h4 className="font-medium text-sm">{s.title}</h4>
               <p className="text-xs text-muted-foreground">{s.description}</p>
@@ -456,14 +451,14 @@ function AnalysisResultView({ result }: { result: any }) {
       <div className="flex gap-3">
         <Button variant="gradient" asChild>
           <Link href="/dashboard/suggestions">
-            <Lightbulb className="w-4 h-4 mr-2" />
-            Review & Implement Suggestions
+            <Sparkles className="w-4 h-4 mr-2" />
+            Review Findings
           </Link>
         </Button>
         <Button variant="outline" asChild>
           <Link href="/dashboard/documentation">
             <FileText className="w-4 h-4 mr-2" />
-            View Documentation
+            Open Report
           </Link>
         </Button>
       </div>

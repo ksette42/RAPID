@@ -19,7 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate, formatSuggestionCategory } from "@/lib/utils";
 import Link from "next/link";
 
 interface Implementation {
@@ -37,7 +37,6 @@ interface Implementation {
     title: string;
     category: string;
     priority: string;
-    estimatedSaving: number | null;
     codeSnippet: string | null;
     improvedCode: string | null;
   } | null;
@@ -128,13 +127,8 @@ export function ImplementationClient({ implementations }: { implementations: Imp
                     <>
                       <span className="text-xs text-muted-foreground">·</span>
                       <Badge variant="outline" className="text-xs">
-                        {impl.suggestion.category.replace("_", " ")}
+                        {formatSuggestionCategory(impl.suggestion.category)}
                       </Badge>
-                      {impl.suggestion.estimatedSaving && impl.suggestion.estimatedSaving > 0 && (
-                        <Badge variant="success" className="text-xs">
-                          Save {formatCurrency(impl.suggestion.estimatedSaving)}/mo
-                        </Badge>
-                      )}
                     </>
                   )}
                 </div>
@@ -266,10 +260,10 @@ export function ImplementationClient({ implementations }: { implementations: Imp
               <GitMerge className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="font-medium">No pending implementations</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Approve suggestions to queue them for implementation
+                Approve findings to queue them for implementation
               </p>
               <Button variant="gradient" size="sm" className="mt-4" asChild>
-                <Link href="/dashboard/suggestions">Review Suggestions</Link>
+                <Link href="/dashboard/suggestions">Review Findings</Link>
               </Button>
             </div>
           ) : (

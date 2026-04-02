@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border/50 bg-background py-12">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <Link href="/" className="flex items-center gap-2 font-bold text-lg mb-3">
               <div className="w-7 h-7 bg-gradient-to-br from-rapid-500 to-purple-600 rounded-md flex items-center justify-center">
@@ -14,32 +14,24 @@ export function Footer() {
               <span className="text-gradient">RAPID</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              AI-powered code and data analysis focused on cost savings and reliability.
+              A simple workspace for analyzing code, documents, and data with clear findings.
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3 text-sm">Product</h4>
+            <h4 className="font-semibold mb-3 text-sm">Explore</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/#features" className="hover:text-foreground transition-colors">Features</Link></li>
-              <li><Link href="/#pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
-              <li><Link href="/changelog" className="hover:text-foreground transition-colors">Changelog</Link></li>
+              <li><Link href="/dashboard/analyze" className="hover:text-foreground transition-colors">Analyze</Link></li>
+              <li><Link href="/dashboard/suggestions" className="hover:text-foreground transition-colors">Findings</Link></li>
+              <li><Link href="/dashboard/documentation" className="hover:text-foreground transition-colors">Documents</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-semibold mb-3 text-sm">Resources</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/docs" className="hover:text-foreground transition-colors">Documentation</Link></li>
-              <li><Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link></li>
-              <li><Link href="/api" className="hover:text-foreground transition-colors">API Reference</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-3 text-sm">Company</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/about" className="hover:text-foreground transition-colors">About</Link></li>
+              <li><Link href="/docs" className="hover:text-foreground transition-colors">API Reference</Link></li>
+              <li><Link href="/download" className="hover:text-foreground transition-colors">Download</Link></li>
               <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link></li>
               <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link></li>
             </ul>

@@ -86,13 +86,13 @@ export function AnalyzeView({ apiKey, apiUrl, openedFile, isElectron }) {
   };
 
   const priorityColors = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#f59e0b', LOW: '#22c55e' };
-  const totalSavings = result?.suggestions?.reduce((a, s) => a + (s.estimatedSaving || 0), 0) || 0;
+  const formatCategory = (category) => (category === 'COST_SAVING' ? 'EFFICIENCY' : category || '').replace(/_/g, ' ');
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Analyze</h1>
       <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 24 }}>
-        Open a file or paste code to analyze for cost savings and reliability improvements.
+        Open a file or paste any code or text-based data to review findings, reliability, and performance.
       </p>
 
       {/* Type selector */}
@@ -113,7 +113,7 @@ export function AnalyzeView({ apiKey, apiUrl, openedFile, isElectron }) {
       {/* Title + file */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
         <input
-          placeholder="Analysis title (e.g. payment-service)"
+          placeholder="Analysis title (e.g. payments review)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           style={{
@@ -141,7 +141,7 @@ export function AnalyzeView({ apiKey, apiUrl, openedFile, isElectron }) {
 
       {/* Code textarea */}
       <textarea
-        placeholder={`Paste your code here...\n\n// Example:\nfunction getUser(id) {\n  return db.query('SELECT * FROM users WHERE id = ' + id);\n}`}
+        placeholder={`Paste your code or data here...\n\n// Example:\nfunction getUser(id) {\n  return db.query('SELECT * FROM users WHERE id = ' + id);\n}`}
         value={code}
         onChange={(e) => setCode(e.target.value)}
         style={{
@@ -192,7 +192,7 @@ export function AnalyzeView({ apiKey, apiUrl, openedFile, isElectron }) {
           {/* Scores */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
             {[
-              { label: 'Cost Savings/mo', value: `$${totalSavings}`, color: '#22c55e', bg: '#052e16', icon: '📉' },
+              { label: 'Findings', value: `${result.analysis.findingsCount || result.suggestions.length}`, color: '#22c55e', bg: '#052e16', icon: '💡' },
               { label: 'Reliability', value: `${result.analysis.reliabilityScore}/100`, color: '#60a5fa', bg: '#0c1a3d', icon: '🛡️' },
               { label: 'Performance', value: `${result.analysis.performanceScore}/100`, color: '#a78bfa', bg: '#2d1b69', icon: '⚡' },
             ].map((s) => (
@@ -209,7 +209,7 @@ export function AnalyzeView({ apiKey, apiUrl, openedFile, isElectron }) {
 
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>{result.suggestions.length} Suggestions</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>{result.suggestions.length} Findings</h3>
             {isElectron && (
               <button onClick={handleExport} style={{
                 padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
@@ -237,12 +237,7 @@ export function AnalyzeView({ apiKey, apiUrl, openedFile, isElectron }) {
                 <span style={{
                   fontSize: 10, padding: '3px 8px', borderRadius: 6,
                   backgroundColor: '#1e1e3a', color: '#9ca3af',
-                }}>{s.category?.replace('_', ' ')}</span>
-                {s.estimatedSaving > 0 && (
-                  <span style={{ marginLeft: 'auto', color: '#22c55e', fontSize: 13, fontWeight: 700 }}>
-                    +${s.estimatedSaving}/mo
-                  </span>
-                )}
+                }}>{formatCategory(s.category)}</span>
               </div>
               <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{s.title}</div>
               <div style={{ color: '#9ca3af', fontSize: 13, lineHeight: 1.6 }}>{s.description}</div>
@@ -270,6 +265,5 @@ export function AnalyzeView({ apiKey, apiUrl, openedFile, isElectron }) {
 
 function generateReport(result, title) {
   const date = new Date().toLocaleDateString();
-  const totalSavings = result.suggestions.reduce((a, s) => a + (s.estimatedSaving || 0), 0);
-  return `# RAPID Analysis: ${title}\n_${date}_\n\n## Scores\n| Metric | Value |\n|--------|-------|\n| Language | ${result.analysis.language} |\n| Reliability | ${result.analysis.reliabilityScore}/100 |\n| Performance | ${result.analysis.performanceScore}/100 |\n| Savings | $${totalSavings}/month |\n\n## Suggestions\n\n${result.suggestions.map((s, i) => `### ${i + 1}. ${s.title}\n- **Priority**: ${s.priority}\n- **Category**: ${s.category}\n${s.estimatedSaving > 0 ? `- **Savings**: $${s.estimatedSaving}/month\n` : ''}\n${s.description}\n`).join('\n')}`;
+  return `# RAPID Analysis: ${title}\n_${date}_\n\n## Scores\n| Metric | Value |\n|--------|-------|\n| Language | ${result.analysis.language} |\n| Reliability | ${result.analysis.reliabilityScore}/100 |\n| Performance | ${result.analysis.performanceScore}/100 |\n| Findings | ${result.analysis.findingsCount || result.suggestions.length} |\n\n## Findings\n\n${result.suggestions.map((s, i) => `### ${i + 1}. ${s.title}\n- **Priority**: ${s.priority}\n- **Category**: ${(s.category === 'COST_SAVING' ? 'EFFICIENCY' : s.category).replace(/_/g, ' ')}\n${s.description}\n`).join('\n')}`;
 }

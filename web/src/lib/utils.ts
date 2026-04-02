@@ -22,6 +22,11 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+export function formatSuggestionCategory(category: string): string {
+  const normalized = category === "COST_SAVING" ? "EFFICIENCY" : category;
+  return normalized.replace(/_/g, " ");
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;

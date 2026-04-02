@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     template: "%s | RAPID",
   },
   description:
-    "RAPID analyzes your code, data, and dashboards to suggest cost-saving and reliability improvements — then implements them with your permission.",
+    "RAPID analyzes code, documents, dashboards, and general data to surface clear findings, scores, and implementation-ready follow-ups.",
   keywords: [
     "code analysis",
-    "performance optimization",
-    "cost savings",
+    "data analysis",
+    "performance review",
     "reliability",
     "AI-powered",
     "code review",
@@ -29,14 +29,14 @@ export const metadata: Metadata = {
     url: process.env.NEXT_PUBLIC_APP_URL,
     title: "RAPID - AI-Powered Code & Data Analysis",
     description:
-      "Analyze any code or data pattern, get actionable improvement suggestions focused on cost savings and reliability.",
+      "Analyze any code or data pattern and review clear findings focused on reliability, performance, and maintainability.",
     siteName: "RAPID",
   },
   twitter: {
     card: "summary_large_image",
     title: "RAPID - AI-Powered Code & Data Analysis",
     description:
-      "Analyze any code or data pattern, get actionable improvement suggestions focused on cost savings and reliability.",
+      "Analyze any code or data pattern and review clear findings focused on reliability, performance, and maintainability.",
   },
   icons: {
     icon: "/favicon.ico",

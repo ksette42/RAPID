@@ -7,54 +7,52 @@ import {
 } from "react-native";
 import { useState } from "react";
 
+const formatCategory = (category: string) =>
+  (category === "COST_SAVING" ? "EFFICIENCY" : category).replace(/_/g, " ");
+
 const DEMO_SUGGESTIONS = [
   {
     id: "1",
     title: "Replace SELECT * with specific columns",
-    description: "Selecting only needed columns reduces data transfer by 60-80%.",
+    description: "Select only the fields you need to keep the query easier to review and process.",
     category: "COST_SAVING",
     priority: "HIGH",
-    estimatedSaving: 300,
     status: "PENDING",
     analysisTitle: "payment-service.ts",
   },
   {
     id: "2",
     title: "Add database connection pooling",
-    description: "PgBouncer or built-in pooling reduces connection overhead by 80%.",
+    description: "Reuse database connections to stabilize response times under heavier load.",
     category: "PERFORMANCE",
     priority: "HIGH",
-    estimatedSaving: 200,
     status: "PENDING",
     analysisTitle: "payment-service.ts",
   },
   {
     id: "3",
-    title: "Implement Redis caching layer",
-    description: "Cache frequent queries to reduce database load by 70%.",
-    category: "COST_SAVING",
+    title: "Document expected request inputs",
+    description: "Add a short note describing required fields and edge cases before this module grows further.",
+    category: "MAINTAINABILITY",
     priority: "MEDIUM",
-    estimatedSaving: 400,
     status: "APPROVED",
     analysisTitle: "database-queries.sql",
   },
   {
     id: "4",
     title: "Add circuit breaker pattern",
-    description: "Prevents cascade failures and improves system reliability by 40%.",
+    description: "Protect downstream calls so one unstable dependency does not cascade across the rest of the flow.",
     category: "RELIABILITY",
     priority: "HIGH",
-    estimatedSaving: 340,
     status: "IMPLEMENTED",
     analysisTitle: "auth-middleware.go",
   },
   {
     id: "5",
-    title: "Enable gzip compression",
-    description: "Reduce bandwidth costs by 60-80% for text-based APIs.",
-    category: "COST_SAVING",
+    title: "Group repeated array transforms",
+    description: "Consolidate repeated data passes into one clearer transformation to improve readability.",
+    category: "MAINTAINABILITY",
     priority: "LOW",
-    estimatedSaving: 80,
     status: "PENDING",
     analysisTitle: "payment-service.ts",
   },
@@ -68,11 +66,9 @@ export default function SuggestionsScreen() {
   const approved = suggestions.filter((s) => s.status === "APPROVED");
   const implemented = suggestions.filter((s) => s.status === "IMPLEMENTED");
 
-  const totalPendingSavings = pending.reduce((acc, s) => acc + s.estimatedSaving, 0);
-
   const handleApprove = (id: string) => {
     Alert.alert(
-      "Approve Suggestion",
+      "Approve Finding",
       "This will queue the change for implementation. You can still review and apply it manually.",
       [
         { text: "Cancel", style: "cancel" },
@@ -131,33 +127,10 @@ export default function SuggestionsScreen() {
           borderBottomColor: "#1e1e3a",
         }}
       >
-        <Text style={{ color: "white", fontSize: 24, fontWeight: "bold" }}>Suggestions</Text>
+        <Text style={{ color: "white", fontSize: 24, fontWeight: "bold" }}>Findings</Text>
         <Text style={{ color: "#6b7280", fontSize: 14, marginTop: 4 }}>
-          Review and approve AI-generated improvements
+          Review and approve AI-generated findings
         </Text>
-        {totalPendingSavings > 0 && (
-          <View
-            style={{
-              backgroundColor: "#052e16",
-              borderRadius: 10,
-              padding: 12,
-              marginTop: 12,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              borderWidth: 1,
-              borderColor: "#166534",
-            }}
-          >
-            <Text style={{ fontSize: 20 }}>📉</Text>
-            <View>
-              <Text style={{ color: "#4ade80", fontSize: 11 }}>Pending Savings</Text>
-              <Text style={{ color: "#22c55e", fontSize: 18, fontWeight: "bold" }}>
-                ${totalPendingSavings}/month
-              </Text>
-            </View>
-          </View>
-        )}
       </View>
 
       {/* Tabs */}
@@ -189,16 +162,16 @@ export default function SuggestionsScreen() {
         ))}
       </View>
 
-      {/* Suggestions list */}
+      {/* Findings list */}
       <View style={{ paddingHorizontal: 16, gap: 12 }}>
         {filteredSuggestions.length === 0 ? (
           <View style={{ alignItems: "center", paddingVertical: 48 }}>
             <Text style={{ fontSize: 40, marginBottom: 12 }}>💡</Text>
             <Text style={{ color: "white", fontWeight: "600", fontSize: 16 }}>
-              No suggestions here
+              No findings here
             </Text>
             <Text style={{ color: "#6b7280", fontSize: 14, marginTop: 4, textAlign: "center" }}>
-              Run an analysis to get improvement suggestions
+              Run an analysis to generate findings
             </Text>
           </View>
         ) : (
@@ -223,11 +196,6 @@ export default function SuggestionsScreen() {
                     {s.analysisTitle}
                   </Text>
                 </View>
-                {s.estimatedSaving > 0 && (
-                  <Text style={{ color: "#22c55e", fontSize: 13, fontWeight: "700" }}>
-                    +${s.estimatedSaving}
-                  </Text>
-                )}
               </View>
 
               <Text style={{ color: "#9ca3af", fontSize: 13, lineHeight: 18, marginBottom: 12 }}>
@@ -258,7 +226,7 @@ export default function SuggestionsScreen() {
                   }}
                 >
                   <Text style={{ color: "#9ca3af", fontSize: 10 }}>
-                    {s.category.replace("_", " ")}
+                    {formatCategory(s.category)}
                   </Text>
                 </View>
               </View>

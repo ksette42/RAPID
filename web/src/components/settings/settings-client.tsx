@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { User, Shield, Bell, Key, Loader2, Save } from "lucide-react";
+import { User, Shield, Bell, Loader2, Save } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 interface UserProfile {
@@ -71,7 +70,7 @@ export function SettingsClient({ user }: { user: UserProfile }) {
               <div>
                 <p className="font-medium">{user.name}</p>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
-                <Badge variant="info" className="mt-1 text-xs">{user.role}</Badge>
+                <p className="text-xs text-muted-foreground mt-1">{user.role}</p>
               </div>
             </div>
 
@@ -150,10 +149,9 @@ export function SettingsClient({ user }: { user: UserProfile }) {
         </CardHeader>
         <CardContent className="space-y-3">
           {[
-            { label: "Analysis completed", desc: "Get notified when analysis finishes" },
-            { label: "New suggestions", desc: "Email when new improvements are found" },
-            { label: "Implementation applied", desc: "Confirmation when changes are made" },
-            { label: "Billing alerts", desc: "Invoice and payment notifications" },
+            { label: "Analysis completed", desc: "Get notified when an analysis finishes" },
+            { label: "New findings", desc: "Get updates when new findings are generated" },
+            { label: "Implementation applied", desc: "Confirmation when reviewed changes are marked as applied" },
           ].map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <div>

@@ -4,14 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import {
-  TrendingDown,
-  ShieldCheck,
   Zap,
   Code2,
-  Lightbulb,
+  Sparkles,
   GitMerge,
   FileText,
   ArrowRight,
@@ -19,17 +16,17 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate, formatSuggestionCategory } from "@/lib/utils";
 
 async function getDashboardData(userId: string) {
-  const [analyses, suggestions, implementations, subscription] = await Promise.all([
+  const [analyses, suggestions, implementations] = await Promise.all([
     prisma.analysis.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: {
         suggestions: {
-          select: { id: true, status: true, estimatedSaving: true },
+          select: { id: true, status: true, category: true },
         },
       },
     }),
@@ -48,13 +45,8 @@ async function getDashboardData(userId: string) {
       take: 3,
       select: { id: true, status: true, createdAt: true },
     }),
-    prisma.subscription.findUnique({ where: { userId } }),
   ]);
 
-  const totalCostSavings = analyses.reduce(
-    (acc, a) => acc + (a.costSavings ?? 0),
-    0
-  );
   const completedAnalyses = analyses.filter((a) => a.status === "COMPLETED").length;
   const pendingSuggestions = suggestions.filter((s) => s.status === "PENDING").length;
   const implementedCount = implementations.filter(
@@ -65,9 +57,7 @@ async function getDashboardData(userId: string) {
     analyses,
     suggestions,
     implementations,
-    subscription,
     stats: {
-      totalCostSavings,
       completedAnalyses,
       pendingSuggestions,
       implementedCount,
@@ -83,15 +73,6 @@ export default async function DashboardPage() {
 
   const statCards = [
     {
-      title: "Total Cost Savings",
-      value: formatCurrency(data.stats.totalCostSavings),
-      description: "Estimated monthly savings",
-      icon: TrendingDown,
-      color: "text-green-400",
-      bg: "bg-green-500/10",
-      trend: "+12% this month",
-    },
-    {
       title: "Analyses Run",
       value: data.stats.totalAnalyses.toString(),
       description: `${data.stats.completedAnalyses} completed`,
@@ -101,10 +82,10 @@ export default async function DashboardPage() {
       trend: "5 this week",
     },
     {
-      title: "Pending Suggestions",
+      title: "Open Findings",
       value: data.stats.pendingSuggestions.toString(),
       description: "Awaiting your review",
-      icon: Lightbulb,
+      icon: Sparkles,
       color: "text-yellow-400",
       bg: "bg-yellow-500/10",
       trend: "Action needed",
@@ -136,7 +117,7 @@ export default async function DashboardPage() {
             Welcome back, {session?.user?.name?.split(" ")[0] ?? "there"} 👋
           </h1>
           <p className="text-muted-foreground">
-            Here's what's happening with your systems.
+            Here is a quick view of your recent analysis activity.
           </p>
         </div>
         <Button variant="gradient" asChild>
@@ -215,11 +196,6 @@ export default async function DashboardPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {analysis.costSavings && analysis.costSavings > 0 && (
-                            <Badge variant="success" className="text-xs">
-                              -{formatCurrency(analysis.costSavings)}/mo
-                            </Badge>
-                          )}
                           <Badge variant={status.variant} className="text-xs">
                             <StatusIcon className="w-3 h-3 mr-1" />
                             {status.label}
@@ -233,11 +209,11 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Pending Suggestions */}
+          {/* Open Findings */}
           <Card className="border-border/50">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Pending Suggestions</CardTitle>
+                <CardTitle className="text-base">Open Findings</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/dashboard/suggestions">
                     Review all <ArrowRight className="ml-1 w-3 h-3" />
@@ -248,8 +224,8 @@ export default async function DashboardPage() {
             <CardContent>
               {data.suggestions.filter(s => s.status === "PENDING").length === 0 ? (
                 <div className="text-center py-6">
-                  <Lightbulb className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No pending suggestions</p>
+                  <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No open findings</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -263,14 +239,14 @@ export default async function DashboardPage() {
                         }`} />
                         <div>
                           <p className="text-sm font-medium">{s.title}</p>
-                          <p className="text-xs text-muted-foreground">{s.category.replace("_", " ")}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatSuggestionCategory(s.category)}
+                          </p>
                         </div>
                       </div>
-                      {s.estimatedSaving && (
-                        <Badge variant="success" className="text-xs">
-                          Save ${s.estimatedSaving}/mo
-                        </Badge>
-                      )}
+                      <Badge variant="outline" className="text-xs">
+                        {s.status}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -281,40 +257,26 @@ export default async function DashboardPage() {
 
         {/* Right Column */}
         <div className="space-y-4">
-          {/* Plan Usage */}
           <Card className="border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Plan Usage</CardTitle>
+              <CardTitle className="text-base">Current Focus</CardTitle>
               <CardDescription>
-                {data.subscription?.plan ?? "FREE"} Plan
+                A compact summary of what to do next.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1.5">
-                  <span>Analyses</span>
-                  <span className="text-muted-foreground">
-                    {data.stats.totalAnalyses} / {data.subscription?.plan === "FREE" ? 5 : "∞"}
-                  </span>
-                </div>
-                <Progress
-                  value={data.subscription?.plan === "FREE"
-                    ? Math.min((data.stats.totalAnalyses / 5) * 100, 100)
-                    : 20}
-                  className="h-2"
-                />
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                <span className="text-sm">Recent analyses</span>
+                <span className="text-sm font-medium">{data.stats.totalAnalyses}</span>
               </div>
-              {data.subscription?.plan === "FREE" && (
-                <div className="bg-rapid-500/10 border border-rapid-500/20 rounded-lg p-3">
-                  <p className="text-xs font-medium text-rapid-400 mb-1">Upgrade to Pro</p>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Unlimited analyses, all languages, auto-implementation
-                  </p>
-                  <Button variant="gradient" size="sm" className="w-full text-xs h-7" asChild>
-                    <Link href="/dashboard/billing">Upgrade Now</Link>
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                <span className="text-sm">Awaiting review</span>
+                <span className="text-sm font-medium">{data.stats.pendingSuggestions}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
+                <span className="text-sm">Implemented changes</span>
+                <span className="text-sm font-medium">{data.stats.implementedCount}</span>
+              </div>
             </CardContent>
           </Card>
 
@@ -325,10 +287,10 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {[
-                { href: "/dashboard/analyze", icon: Code2, label: "Analyze Code", color: "text-blue-400" },
-                { href: "/dashboard/suggestions", icon: Lightbulb, label: "Review Suggestions", color: "text-yellow-400" },
+                { href: "/dashboard/analyze", icon: Code2, label: "Run Analysis", color: "text-blue-400" },
+                { href: "/dashboard/suggestions", icon: Sparkles, label: "Review Findings", color: "text-yellow-400" },
                 { href: "/dashboard/implementation", icon: GitMerge, label: "Apply Changes", color: "text-purple-400" },
-                { href: "/dashboard/documentation", icon: FileText, label: "View Docs", color: "text-pink-400" },
+                { href: "/dashboard/documentation", icon: FileText, label: "Open Documents", color: "text-pink-400" },
               ].map((action) => (
                 <Link
                   key={action.href}
