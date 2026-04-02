@@ -83,11 +83,14 @@ RAPID is a full-stack AI-powered application (web + mobile) that analyzes any ty
 ```bash
 cd web
 
-# Copy env file
-cp .env.example .env.local
+# Copy env file for Prisma and Next.js
+cp .env.example .env
 
 # Fill in your environment variables
 # DATABASE_URL, NEXTAUTH_SECRET, GOOGLE/GITHUB credentials, STRIPE keys
+
+# Optional: if you prefer Next.js-only local overrides, also copy:
+# cp .env .env.local
 
 # Install dependencies
 npm install

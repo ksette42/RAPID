@@ -336,10 +336,12 @@ npm install
 
 ```bash
 cd web
+cp .env.example .env
 cp .env.example .env.local
 ```
 
-Open `web/.env.local` and fill in each value:
+Open `web/.env` and fill in each value for Prisma/CLI usage. Mirror the same values into
+`web/.env.local` for Next.js runtime usage:
 
 ```env
 # PostgreSQL — local example
