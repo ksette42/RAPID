@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" />
+    <title>RAPID</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #0a0a1a; color: white; font-family: Inter, system-ui, -apple-system, sans-serif; overflow: hidden; }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #0a0a1a; }
+      ::-webkit-scrollbar-thumb { background: #1e1e3a; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #2d2d5a; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/renderer/main.jsx"></script>
+  </body>
+</html>

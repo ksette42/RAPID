@@ -1,0 +1,5 @@
+# Don't commit sensitive files at the root
+.env
+.env.local
+*.pem
+.DS_Store

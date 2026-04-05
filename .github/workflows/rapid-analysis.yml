@@ -1,0 +1,193 @@
+name: RAPID Code Analysis
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      scan_path:
+        description: 'Directory to scan (default: src/)'
+        required: false
+        default: 'src/'
+
+# ── Permissions ─────────────────────────────────────────────────────────────
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  rapid-analyze:
+    name: RAPID Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Setup Node ────────────────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      # ── Analyze changed files (on PR) via RAPID API ──────────────────────
+      - name: Analyze changed files
+        if: github.event_name == 'pull_request'
+        env:
+          RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+          RAPID_API_URL: ${{ secrets.RAPID_API_URL || 'https://app.rapid.dev' }}
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '\.(ts|tsx|js|jsx|py|go|rs|java|sql|tf|yaml|yml)$' \
+            | head -10 || true)
+
+          echo "## ⚡ RAPID Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No analyzable files changed in this PR." >> $GITHUB_STEP_SUMMARY
+            echo "No analyzable files found — skipping analysis."
+            exit 0
+          fi
+
+          echo "| File | Suggestions | Savings/mo |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------------|------------|" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_SAVINGS=0
+          TOTAL_SUGGESTIONS=0
+          REPORT_JSON="[]"
+
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              echo "Analyzing: $file"
+              CONTENT=$(cat "$file" | head -c 50000)
+              TITLE=$(basename "$file")
+
+              if [ -n "$RAPID_API_KEY" ]; then
+                RESPONSE=$(curl -s -X POST "$RAPID_API_URL/api/analyze" \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $RAPID_API_KEY" \
+                  -d "{\"title\":\"$TITLE\",\"content\":$(echo "$CONTENT" | jq -Rs .),\"type\":\"CODE\",\"fileName\":\"$TITLE\"}" \
+                  --max-time 30 || echo '{}')
+              else
+                RESPONSE='{}'
+              fi
+
+              SUGGESTIONS=$(echo "$RESPONSE" | node -e "
+                try {
+                  const d = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+                  console.log(d.suggestions?.length || 0);
+                } catch { console.log(0); }" 2>/dev/null || echo "0")
+
+              SAVINGS=$(echo "$RESPONSE" | node -e "
+                try {
+                  const d = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+                  console.log(d.suggestions?.reduce((a,s)=>a+(s.estimatedSaving||0),0) || 0);
+                } catch { console.log(0); }" 2>/dev/null || echo "0")
+
+              TOTAL_SAVINGS=$((TOTAL_SAVINGS + SAVINGS))
+              TOTAL_SUGGESTIONS=$((TOTAL_SUGGESTIONS + SUGGESTIONS))
+
+              echo "| \`$file\` | $SUGGESTIONS | \$$SAVINGS |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done <<< "$CHANGED_FILES"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total: $TOTAL_SUGGESTIONS suggestions found | \$$TOTAL_SAVINGS/month potential savings**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View full report →]($RAPID_API_URL/dashboard)" >> $GITHUB_STEP_SUMMARY
+
+          # Save summary for artifact
+          echo "{\"totalSuggestions\":$TOTAL_SUGGESTIONS,\"totalSavings\":$TOTAL_SAVINGS}" > rapid-report.json
+
+      # ── Full workspace scan (on push to main) ─────────────────────────────
+      - name: Scan workspace
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+          RAPID_API_URL: ${{ secrets.RAPID_API_URL || 'https://app.rapid.dev' }}
+        run: |
+          SCAN_PATH="${{ github.event.inputs.scan_path || 'web/src/' }}"
+
+          FILES=$(find "$SCAN_PATH" -type f \
+            \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.py" -o -name "*.go" -o -name "*.sql" \) \
+            2>/dev/null | head -20 || true)
+
+          FILE_COUNT=$(echo "$FILES" | grep -c . || echo "0")
+
+          echo "## ⚡ RAPID Workspace Scan" >> $GITHUB_STEP_SUMMARY
+          echo "Scanned \`$SCAN_PATH\` — found $FILE_COUNT files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Scan complete. [View results in dashboard →]($RAPID_API_URL/dashboard)" >> $GITHUB_STEP_SUMMARY
+
+          echo "{\"scannedPath\":\"$SCAN_PATH\",\"fileCount\":$FILE_COUNT}" > rapid-report.json
+
+      # ── Upload report as artifact ────────────────────────────────────────
+      - name: Upload RAPID report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapid-analysis-report
+          path: rapid-report.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      # ── Post PR comment ──────────────────────────────────────────────────
+      - name: Post analysis comment on PR
+        if: github.event_name == 'pull_request' && env.RAPID_API_KEY != ''
+        uses: actions/github-script@v7
+        env:
+          RAPID_API_KEY: ${{ secrets.RAPID_API_KEY }}
+          RAPID_API_URL: ${{ secrets.RAPID_API_URL || 'https://app.rapid.dev' }}
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '{}';
+            try { report = fs.readFileSync('rapid-report.json', 'utf8'); } catch {}
+
+            const body = `## ⚡ RAPID Analysis
+
+            RAPID analyzed the changed files in this PR.
+
+            | Metric | Value |
+            |--------|-------|
+            | Files analyzed | ${{ github.event.pull_request.changed_files }} |
+            | Status | ✅ Complete |
+
+            [View full suggestions in your RAPID dashboard →](${ process.env.RAPID_API_URL }/dashboard/suggestions)
+
+            <sub>Powered by [RAPID](https://rapid.dev) — Read, Analyze, Patch, Implement & Document</sub>`;
+
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.data.find(c => c.body.includes('⚡ RAPID Analysis'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

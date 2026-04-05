@@ -1,0 +1,57 @@
+import Link from "next/link";
+import { Zap, Github, Twitter } from "lucide-react";
+
+export function Footer() {
+  return (
+    <footer className="border-t border-border/50 bg-background py-12">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div>
+            <Link href="/" className="flex items-center gap-2 font-bold text-lg mb-3">
+              <div className="w-7 h-7 bg-gradient-to-br from-rapid-500 to-purple-600 rounded-md flex items-center justify-center">
+                <Zap className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-gradient">RAPID</span>
+            </Link>
+            <p className="text-sm text-muted-foreground">
+              A simple workspace for analyzing code, documents, and data with clear findings.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-3 text-sm">Explore</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/dashboard/analyze" className="hover:text-foreground transition-colors">Analyze</Link></li>
+              <li><Link href="/dashboard/suggestions" className="hover:text-foreground transition-colors">Findings</Link></li>
+              <li><Link href="/dashboard/documentation" className="hover:text-foreground transition-colors">Documents</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-3 text-sm">Resources</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/docs" className="hover:text-foreground transition-colors">API Reference</Link></li>
+              <li><Link href="/download" className="hover:text-foreground transition-colors">Download</Link></li>
+              <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link></li>
+              <li><Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            © 2026 RAPID. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4">
+            <Link href="https://github.com" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Github className="w-5 h-5" />
+            </Link>
+            <Link href="https://twitter.com" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Twitter className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
